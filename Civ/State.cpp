@@ -64,26 +64,28 @@ int State::advance_state()
 								Unit*& pressed_unit = tile(pressed_tile).unit;
 								// TODO: implement "fast movement" where ranged attack range != movement
 								if (pressed_unit) {
-									if ((*selected_unit)->is_melee()) {
-										Unit*& move_dest = tile(it->second.second).unit;
-										if (move_dest != *selected_unit) {
-											assert(!move_dest);
-											(*selected_unit)->movement = mtiles.find(it->second.second)->second.first;
-											move_dest = *selected_unit;
-											*selected_unit = NULL;
-											selected_tile = it->second.second;
+									if ((*selected_unit)->attacks > 0) {
+										if ((*selected_unit)->is_melee()) {
+											Unit*& move_dest = tile(it->second.second).unit;
+											if (move_dest != *selected_unit) {
+												assert(!move_dest);
+												(*selected_unit)->movement = mtiles.find(it->second.second)->second.first;
+												move_dest = *selected_unit;
+												*selected_unit = NULL;
+												selected_tile = it->second.second;
+											}
+											selected_unit = &move_dest;
 										}
-										selected_unit = &move_dest;
-									}
-									switch (unit_attack(*selected_unit, pressed_unit, tile(pressed_tile).terrain_cost())) {
-									case 0:
-										break;
-									case 1:
-										selected_tile = pressed_tile;
-										break;
-									case 2:
-										selected_tile = { -1, -1 };
-										break;
+										switch (unit_attack(*selected_unit, pressed_unit, tile(pressed_tile).terrain_cost())) {
+										case 0:
+											break;
+										case 1:
+											selected_tile = pressed_tile;
+											break;
+										case 2:
+											selected_tile = { -1, -1 };
+											break;
+										}
 									}
 								}
 								else {

@@ -23,6 +23,7 @@ public:
 	SDL_Texture* military_move_only;
 	SDL_Texture* military_background;
 	SDL_Texture* military_background_selected;
+	SDL_Texture* military_background_selected_no_attack;
 	SDL_Texture* rock_slinger;
 	SDL_Texture* clubber;
 	SDL_Texture* food;

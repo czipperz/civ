@@ -144,11 +144,12 @@ Renderer::Renderer(int width, int height)
 		exit(1);
 	}
 	SDL_SetRenderTarget(renderer, military_move_only);
-	SDL_SetRenderDrawColor(renderer, 0x88, 0x88, 0x88, 0xFF);
+	SDL_SetRenderDrawColor(renderer, 0x0B, 0xB2, 0xE2, 0xFF);
 	SDL_RenderClear(renderer);
 
 	military_background = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/MilitaryOutline.png");
 	military_background_selected = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/MilitaryOutlineSelected.png");
+	military_background_selected_no_attack = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/MilitaryOutlineSelectedNoAttack.png");
 	rock_slinger = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/RockSlinger.png");
 	clubber = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Clubber.png");
 	food = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Food.png");
@@ -168,6 +169,7 @@ Renderer::~Renderer()
 	SDL_DestroyTexture(food);
 	SDL_DestroyTexture(clubber);
 	SDL_DestroyTexture(rock_slinger);
+	SDL_DestroyTexture(military_background_selected_no_attack);
 	SDL_DestroyTexture(military_background_selected);
 	SDL_DestroyTexture(military_background);
 	SDL_DestroyTexture(military_move_only);
@@ -198,38 +200,34 @@ void Renderer::render(const State& state)
 			if (state.tile(tile.first).unit) {
 				if (state.tile(state.selected_tile).unit->attacks > 0) {
 					SDL_RenderCopy(renderer, military_move_attack, NULL, &dest);
+					if (state.tile(state.selected_tile).unit->is_melee()) {
+						SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+						SDL_SetRenderDrawColor(renderer, 0xFF, 0, 0, 0xFF);
+						SDL_Rect dest;
+						dest.x = (dim + border) * tile.first.x + border / 2;
+						dest.y = (dim + border) * tile.first.y + border / 2;
+						if (tile.second.second.x != tile.first.x) {
+							dest.y += border / 2;
+							dest.w = border / 2;
+							dest.h = dim;
+						}
+						if (tile.second.second.x > tile.first.x) {
+							dest.x += dim + border / 2;
+						}
+						if (tile.second.second.y != tile.first.y) {
+							dest.x += border / 2;
+							dest.w = dim;
+							dest.h = border / 2;
+						}
+						if (tile.second.second.y > tile.first.y) {
+							dest.y += dim + border / 2;
+						}
+						SDL_RenderFillRect(renderer, &dest);
+					}
 				}
 			}
 			else {
 				SDL_RenderCopy(renderer, military_move_only, NULL, &dest);
-			}
-		}
-		if (state.tile(state.selected_tile).unit->is_melee()) {
-			for (const auto& tile : tiles) {
-				if (state.tile(tile.first).unit) {
-					SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-					SDL_SetRenderDrawColor(renderer, 0xFF, 0, 0, 0xFF);
-					SDL_Rect dest;
-					dest.x = (dim + border) * tile.first.x + border / 2;
-					dest.y = (dim + border) * tile.first.y + border / 2;
-					if (tile.second.second.x != tile.first.x) {
-						dest.y += border / 2;
-						dest.w = border / 2;
-						dest.h = dim;
-					}
-					if (tile.second.second.x > tile.first.x) {
-						dest.x += dim + border / 2;
-					}
-					if (tile.second.second.y != tile.first.y) {
-						dest.x += border / 2;
-						dest.w = dim;
-						dest.h = border / 2;
-					}
-					if (tile.second.second.y > tile.first.y) {
-						dest.y += dim + border / 2;
-					}
-					SDL_RenderFillRect(renderer, &dest);
-				}
 			}
 		}
 	}
@@ -282,7 +280,12 @@ void Renderer::render(const State& state)
 			}
 			if (state.render_military && tile.unit) {
 				if (state.selected_tile.x == x && state.selected_tile.y == y) {
-					SDL_RenderCopy(renderer, military_background_selected, NULL, &dest);
+					if (tile.unit->attacks > 0) {
+						SDL_RenderCopy(renderer, military_background_selected, NULL, &dest);
+					}
+					else {
+						SDL_RenderCopy(renderer, military_background_selected_no_attack, NULL, &dest);
+					}
 				}
 				SDL_RenderCopy(renderer, military_background, NULL, &dest);
 				switch (tile.unit->type) {
