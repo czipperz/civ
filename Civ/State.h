@@ -5,6 +5,9 @@
 #include <SDL.h>
 #include <map>
 #include "Point.h"
+#include <memory>
+
+class Player;
 
 enum RenderMode {
 	RenderMilitary, RenderCivilians,
@@ -22,15 +25,18 @@ public:
 	int height;
 	std::vector<std::vector<Tile>> tiles;
 	Point selected_point;
+	std::vector<std::unique_ptr<Player>> players;
+
 	RenderMode render_mode;
-	bool render_military() const;
-	bool render_civilians() const;
 	bool render_resources;
 
 	State(int width, int height);
+	~State();
 	int advance_state();
 	std::map<Point, std::pair<int, Point>> movement_tiles(const Point& tile) const;
 	const Tile& tile(Point t) const;
 	Tile& tile(Point t);
+	bool render_military() const;
+	bool render_civilians() const;
 };
 

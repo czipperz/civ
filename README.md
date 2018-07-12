@@ -1,4 +1,4 @@
-#Civ
+# Civ
 
 This game is a 4X game (explore, expand, exploit, exterminate).
 Thus the user will start with a small city and build it up and defend it as time progresses.

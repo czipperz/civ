@@ -28,6 +28,7 @@ public:
 	SDL_Texture* rock_slinger;
 	SDL_Texture* clubber;
 	SDL_Texture* worker;
+	SDL_Texture* settler;
 	SDL_Texture* food;
 	SDL_Texture* production;
 	SDL_Texture* frame;

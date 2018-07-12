@@ -7,6 +7,7 @@
 #include "State.h"
 #include <assert.h>
 #include "Resources.h"
+#include "Player.h"
 
 int window_width = 640;
 int window_height = 480;
@@ -107,12 +108,6 @@ Renderer::Renderer(int width, int height)
 			}
 		}
 	}
-	/*{
-		SDL_Surface* surface = SDL_CreateRGBSurface(0, dim, dim, 32, 0, 0, 0, 0);
-		SDL_RenderReadPixels(renderer, NULL, surface->format->format, surface->pixels, surface->pitch);
-		IMG_SavePNG(surface, "C:/Users/gregorcj/Pictures/Forest.png");
-		SDL_FreeSurface(surface);
-	}*/
 
 	hill = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Hill.png");
 
@@ -122,23 +117,29 @@ Renderer::Renderer(int width, int height)
 		fprintf(stderr, "SDL texture creation error: %s\n", SDL_GetError());
 		exit(1);
 	}
-	//SDL_SetTextureBlendMode(movement_outline, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderTarget(renderer, movement_outline);
 	SDL_SetRenderDrawColor(renderer, 0x60, 0xE2, 0xFF, 0xFF);
 	SDL_RenderClear(renderer);
 
 	military_move_attack = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-		dim + border, dim + border);
+		dim, dim);
+	SDL_SetTextureBlendMode(military_move_attack, SDL_BLENDMODE_BLEND);
 	if (!military_move_attack) {
 		fprintf(stderr, "SDL texture creation error: %s\n", SDL_GetError());
 		exit(1);
 	}
 	SDL_SetRenderTarget(renderer, military_move_attack);
-	SDL_SetRenderDrawColor(renderer, 0xAA, 0x0, 0x0, 0xFF);
+	SDL_SetRenderDrawColor(renderer, 0xAA, 0, 0, 0xFF);
 	SDL_RenderClear(renderer);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+	{
+		SDL_Rect middle = { border / 2, border / 2, dim - border, dim - border };
+		SDL_RenderFillRect(renderer, &middle);
+	}
 
 	military_move_only = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-		dim + border, dim + border);
+		dim, dim);
+	SDL_SetTextureBlendMode(military_move_only, SDL_BLENDMODE_BLEND);
 	if (!military_move_only) {
 		fprintf(stderr, "SDL texture creation error: %s\n", SDL_GetError());
 		exit(1);
@@ -146,6 +147,11 @@ Renderer::Renderer(int width, int height)
 	SDL_SetRenderTarget(renderer, military_move_only);
 	SDL_SetRenderDrawColor(renderer, 0x0B, 0xB2, 0xE2, 0xFF);
 	SDL_RenderClear(renderer);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+	{
+		SDL_Rect middle = { border / 2, border / 2, dim - border, dim - border };
+		SDL_RenderFillRect(renderer, &middle);
+	}
 
 	military_background = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/MilitaryOutline.png");
 	military_background_selected = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/MilitaryOutlineSelected.png");
@@ -154,6 +160,7 @@ Renderer::Renderer(int width, int height)
 	rock_slinger = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/RockSlinger.png");
 	clubber = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Clubber.png");
 	worker = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Worker.png");
+	settler = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Settler.png");
 	food = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Food.png");
 	production = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Production.png");
 
@@ -170,6 +177,7 @@ Renderer::~Renderer()
 	SDL_DestroyTexture(production);
 	SDL_DestroyTexture(food);
 	SDL_DestroyTexture(clubber);
+	SDL_DestroyTexture(settler);
 	SDL_DestroyTexture(worker);
 	SDL_DestroyTexture(rock_slinger);
 	SDL_DestroyTexture(civilian_background_selected_no_military);
@@ -193,58 +201,38 @@ void Renderer::render(const State& state)
 	SDL_SetRenderTarget(renderer, frame);
 	SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
 	SDL_RenderClear(renderer);
-	if (state.render_military() && state.selected_point.y != -1 && state.tile(state.selected_point).military) {
-		const auto tiles = state.movement_tiles(state.selected_point);
-		for (const auto& tile : tiles) {
+
+	for (int y = 0; y < state.height; ++y) {
+		for (int x = 0; x < state.width; ++x) {
 			SDL_Rect dest;
-			dest.x = (dim + border) * tile.first.x + border / 2;
-			dest.y = (dim + border) * tile.first.y + border / 2;
+			dest.x = (dim + border) * x + border / 2;
+			dest.y = (dim + border) * y + border / 2;
 			dest.w = dim + border;
 			dest.h = dim + border;
-			if (state.tile(tile.first).military) {
-				if (state.tile(state.selected_point).military->attacks > 0) {
-					SDL_RenderCopy(renderer, military_move_attack, NULL, &dest);
-					if (state.tile(state.selected_point).military->is_melee()) {
-						SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-						SDL_SetRenderDrawColor(renderer, 0xFF, 0, 0, 0xFF);
-						SDL_Rect dest;
-						dest.x = (dim + border) * tile.first.x + border / 2;
-						dest.y = (dim + border) * tile.first.y + border / 2;
-						if (tile.second.second.x != tile.first.x) {
-							dest.y += border / 2;
-							dest.w = border / 2;
-							dest.h = dim;
-						}
-						if (tile.second.second.x > tile.first.x) {
-							dest.x += dim + border / 2;
-						}
-						if (tile.second.second.y != tile.first.y) {
-							dest.x += border / 2;
-							dest.w = dim;
-							dest.h = border / 2;
-						}
-						if (tile.second.second.y > tile.first.y) {
-							dest.y += dim + border / 2;
-						}
-						SDL_RenderFillRect(renderer, &dest);
-					}
+			const Tile& tile = state.tiles[y][x];
+			Player* player = NULL;
+			if (state.render_military() && tile.military) {
+				player = tile.military->player;
+			}
+			else if (state.render_civilians() && tile.civilian) {
+				player = tile.civilian->player;
+			}
+			if (player) {
+				SDL_Color color;
+				switch (player->civilization) {
+				case America:
+					color.r = 0;
+					color.g = 0;
+					color.b = 0xFF;
+					break;
+				case Britain:
+					color.r = 0xFF;
+					color.g = 0;
+					color.b = 0;
+					break;
 				}
-			}
-			else {
-				SDL_RenderCopy(renderer, military_move_only, NULL, &dest);
-			}
-		}
-	}
-	else if (state.render_civilians() && state.selected_point.y != -1 && state.tile(state.selected_point).civilian) {
-		const auto tiles = state.movement_tiles(state.selected_point);
-		for (const auto& tile : tiles) {
-			SDL_Rect dest;
-			dest.x = (dim + border) * tile.first.x + border / 2;
-			dest.y = (dim + border) * tile.first.y + border / 2;
-			dest.w = dim + border;
-			dest.h = dim + border;
-			if (!state.tile(tile.first).civilian) {
-				SDL_RenderCopy(renderer, military_move_only, NULL, &dest);
+				SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 0xFF);
+				SDL_RenderFillRect(renderer, &dest);
 			}
 		}
 	}
@@ -256,12 +244,6 @@ void Renderer::render(const State& state)
 			dest.y = (dim + border) * y + border;
 			dest.w = dim;
 			dest.h = dim;
-			/*
-			dest.x = ((dim + border) * x + state.xrel) * state.zoom;
-			dest.y = ((dim + border) * y + state.yrel) * state.zoom;
-			dest.w = dim * state.zoom;
-			dest.h = dim * state.zoom;
-			*/
 			const Tile& tile = state.tiles[y][x];
 			if (tile.type == Plains) {
 				SDL_RenderCopy(renderer, plains, NULL, &dest);
@@ -278,24 +260,74 @@ void Renderer::render(const State& state)
 			if (tile.height == Hill) {
 				SDL_RenderCopy(renderer, hill, NULL, &dest);
 			}
-			if (state.render_resources) {
-				Resources r = tile.resources();
-				int total = r.food + r.production;
-				assert(total <= 4);
-				SDL_Rect res_dest = dest;
-				res_dest.w = res_dest.h = 24;
-				res_dest.x -= 24 / 2;
-				res_dest.y += dim / 2 - 24 / 2;
-				res_dest.x += dim / (total + 1);
-				for (int f = 0; f < r.food; ++f) {
-					SDL_RenderCopy(renderer, food, NULL, &res_dest);
-					res_dest.x += dim / (total + 1);
-				}
-				for (int p = 0; p < r.production; ++p) {
-					SDL_RenderCopy(renderer, production, NULL, &res_dest);
-					res_dest.x += dim / (total + 1);
+		}
+	}
+
+	if (state.render_military() && state.selected_point.y != -1 && state.tile(state.selected_point).military) {
+		const auto tiles = state.movement_tiles(state.selected_point);
+		for (const auto& tile : tiles) {
+			SDL_Rect dest;
+			dest.x = (dim + border) * tile.first.x + border;
+			dest.y = (dim + border) * tile.first.y + border;
+			dest.w = dim;
+			dest.h = dim;
+			if (state.tile(tile.first).military) {
+				const Tile& selected_tile = state.tile(state.selected_point);
+				if (selected_tile.military->player != state.tile(tile.first).military->player && selected_tile.military->attacks > 0) {
+					SDL_RenderCopy(renderer, military_move_attack, NULL, &dest);
+					if (selected_tile.military->is_melee()) {
+						SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+						SDL_SetRenderDrawColor(renderer, 0xFF, 0, 0, 0xFF);
+						SDL_Rect dest;
+						dest.x = (dim + border) * tile.first.x + border;
+						dest.y = (dim + border) * tile.first.y + border;
+						if (tile.second.second.x != tile.first.x) {
+							dest.y += border / 2;
+							dest.w = border / 2;
+							dest.h = dim - border;
+						}
+						if (tile.second.second.x > tile.first.x) {
+							dest.x += dim - border / 2;
+						}
+						if (tile.second.second.y != tile.first.y) {
+							dest.x += border / 2;
+							dest.w = dim - border;
+							dest.h = border / 2;
+						}
+						if (tile.second.second.y > tile.first.y) {
+							dest.y += dim - border / 2;
+						}
+						SDL_RenderFillRect(renderer, &dest);
+					}
 				}
 			}
+			else {
+				SDL_RenderCopy(renderer, military_move_only, NULL, &dest);
+			}
+		}
+	}
+	else if (state.render_civilians() && state.selected_point.y != -1 && state.tile(state.selected_point).civilian) {
+		const auto tiles = state.movement_tiles(state.selected_point);
+		for (const auto& tile : tiles) {
+			SDL_Rect dest;
+			dest.x = (dim + border) * tile.first.x + border;
+			dest.y = (dim + border) * tile.first.y + border;
+			dest.w = dim;
+			dest.h = dim;
+			if (!state.tile(tile.first).civilian) {
+				SDL_RenderCopy(renderer, military_move_only, NULL, &dest);
+			}
+		}
+	}
+
+	for (int y = 0; y < state.height; ++y) {
+		for (int x = 0; x < state.width; ++x) {
+			SDL_Rect dest;
+			dest.x = (dim + border) * x + border;
+			dest.y = (dim + border) * y + border;
+			dest.w = dim;
+			dest.h = dim;
+			const Tile& tile = state.tiles[y][x];
 			if (state.render_civilians() && tile.civilian) {
 				if (state.selected_point.x == x && state.selected_point.y == y) {
 					if (tile.military) {
@@ -312,6 +344,8 @@ void Renderer::render(const State& state)
 				case Worker:
 					SDL_RenderCopy(renderer, worker, NULL, &dest);
 					break;
+				case Settler:
+					SDL_RenderCopy(renderer, settler, NULL, &dest);
 				}
 			}
 			if (state.render_military() && tile.military) {
@@ -331,6 +365,25 @@ void Renderer::render(const State& state)
 				case Clubber:
 					SDL_RenderCopy(renderer, clubber, NULL, &dest);
 					break;
+				}
+			}
+
+			if (state.render_resources) {
+				Resources r = tile.resources();
+				int total = r.food + r.production;
+				assert(total <= 4);
+				SDL_Rect res_dest = dest;
+				res_dest.w = res_dest.h = 24;
+				res_dest.x -= 24 / 2;
+				res_dest.y += dim / 2 - 24 / 2;
+				res_dest.x += dim / (total + 1);
+				for (int f = 0; f < r.food; ++f) {
+					SDL_RenderCopy(renderer, food, NULL, &res_dest);
+					res_dest.x += dim / (total + 1);
+				}
+				for (int p = 0; p < r.production; ++p) {
+					SDL_RenderCopy(renderer, production, NULL, &res_dest);
+					res_dest.x += dim / (total + 1);
 				}
 			}
 		}

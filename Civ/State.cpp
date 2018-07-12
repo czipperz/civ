@@ -4,16 +4,7 @@
 #include <SDL.h>
 #include <assert.h>
 #include "Unit.h"
-
-bool State::render_military() const
-{
-	return render_mode == RenderMilitary;
-}
-
-bool State::render_civilians() const
-{
-	return render_mode == RenderCivilians;
-}
+#include "Player.h"
 
 State::State(int width, int height)
 	: xrel(Renderer::border)
@@ -27,6 +18,10 @@ State::State(int width, int height)
 	, render_resources(false)
 {
 	generate_tiles(tiles, width, height);
+}
+
+State::~State()
+{
 }
 
 int State::advance_state()
@@ -99,7 +94,6 @@ int State::advance_state()
 			if (event.motion.state & SDL_BUTTON_LMASK) {
 				xrel += event.motion.xrel;
 				yrel += event.motion.yrel;
-				//printf("movement: (%lf, %lf)\n", event.motion.xrel / zoom, event.motion.yrel);
 			}
 		}
 		if (event.type == SDL_MOUSEWHEEL) {
@@ -138,7 +132,7 @@ void State::handle_unit_attack_move(Point pressed_point)
 		if (render_military() && selected_tile->military) {
 			// TODO: implement "fast movement" where ranged attack range != movement
 			if (pressed_tile.military) {
-				if (selected_tile->military->attacks > 0) {
+				if (selected_tile->military->player != pressed_tile.military->player && selected_tile->military->attacks > 0) {
 					if (selected_tile->military->is_melee()) {
 						MilitaryUnit*& move_dest = tile(it->second.second).military;
 						selected_tile->military->movement = it->second.first;
@@ -228,4 +222,14 @@ const Tile & State::tile(Point t) const
 Tile & State::tile(Point t)
 {
 	return tiles[t.y][t.x];
+}
+
+bool State::render_military() const
+{
+	return render_mode == RenderMilitary;
+}
+
+bool State::render_civilians() const
+{
+	return render_mode == RenderCivilians;
 }

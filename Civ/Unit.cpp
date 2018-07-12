@@ -4,6 +4,7 @@
 #include <utility>
 #include <map>
 #include "Tile.h"
+#include "Player.h"
 
 std::map<Point, std::pair<int, Point>> Unit::movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles)
 {
@@ -56,10 +57,11 @@ std::map<Point, std::pair<int, Point>> Unit::movement_tiles(Point p, const std::
 	return *paths_out;
 }
 
-MilitaryUnit::MilitaryUnit(MilitaryUnitType type)
+MilitaryUnit::MilitaryUnit(Player* p, MilitaryUnitType type)
 	: type(type)
 	, attacks(1)
 {
+	player = p;
 	health = max_health();
 	movement = max_movement();
 }
@@ -103,9 +105,10 @@ int MilitaryUnit::max_movement()
 	}
 }
 
-CivilianUnit::CivilianUnit(CivilianUnitType type)
+CivilianUnit::CivilianUnit(Player* p, CivilianUnitType type)
 	: type(type)
 {
+	player = p;
 	health = max_health();
 	movement = max_movement();
 }
@@ -115,6 +118,8 @@ int CivilianUnit::max_health()
 	switch (type) {
 	case Worker:
 		return 8;
+	case Settler:
+		return 8;
 	}
 }
 
@@ -123,5 +128,19 @@ int CivilianUnit::max_movement()
 	switch (type) {
 	case Worker:
 		return 8;
+	case Settler:
+		return 8;
 	}
+}
+
+MilitaryUnit* create_unit(Player* player, MilitaryUnitType type)
+{
+	player->military_units.push_back(std::make_unique<MilitaryUnit>(player, type));
+	return player->military_units.back().get();
+}
+
+CivilianUnit* create_unit(Player* player, CivilianUnitType type)
+{
+	player->civilian_units.push_back(std::make_unique<CivilianUnit>(player, type));
+	return player->civilian_units.back().get();
 }

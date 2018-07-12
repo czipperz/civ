@@ -17,6 +17,7 @@ enum TileImprovement {
 
 class MilitaryUnit;
 class CivilianUnit;
+class City;
 class Resources;
 
 class Tile
@@ -28,6 +29,7 @@ public:
 	TileImprovement improvement;
 	MilitaryUnit* military;
 	CivilianUnit* civilian;
+	City* city;
 
 	bool add_forest();
 	bool add_jungle();
