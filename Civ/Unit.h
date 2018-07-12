@@ -5,26 +5,42 @@
 
 class Tile;
 
-enum UnitType {
+class Unit {
+public:
+	int health;
+	int movement;
+	std::map<Point, std::pair<int, Point>> movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles);
+};
+
+enum MilitaryUnitType {
 	RockSlinger,
 	Clubber,
 };
 
-class Unit
-{
+class MilitaryUnit : public Unit {
 public:
-	UnitType type;
-	int health;
-	int movement;
+	MilitaryUnitType type;
 	int attacks;
 
-	Unit(UnitType type);
+	MilitaryUnit(MilitaryUnitType type);
 
-	bool is_melee();
 	int max_health();
-	int max_attack();
 	int max_movement();
-	std::map<Point, std::pair<int, Point>> movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles);
+
+	int max_attack();
+	bool is_melee();
 };
 
-int unit_attack(Unit*& u, Unit*& other, int other_cost);
+enum CivilianUnitType {
+	Worker,
+};
+
+class CivilianUnit : public Unit {
+public:
+	CivilianUnitType type;
+
+	CivilianUnit(CivilianUnitType type);
+
+	int max_health();
+	int max_movement();
+};

@@ -11,9 +11,12 @@ enum TileCover {
 enum TileHeight {
 	Flat, Hill,
 };
+enum TileImprovement {
+	Unimproved, Farm, Mine, Mill,
+};
 
-class Unit;
-class Civilian;
+class MilitaryUnit;
+class CivilianUnit;
 class Resources;
 
 class Tile
@@ -22,8 +25,9 @@ public:
 	TileType type;
 	TileCover cover;
 	TileHeight height;
-	Unit* unit;
-	Civilian* civilian;
+	TileImprovement improvement;
+	MilitaryUnit* military;
+	CivilianUnit* civilian;
 
 	bool add_forest();
 	bool add_jungle();

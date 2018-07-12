@@ -5,16 +5,25 @@
 #include <assert.h>
 #include "Unit.h"
 
+bool State::render_military() const
+{
+	return render_mode == RenderMilitary;
+}
+
+bool State::render_civilians() const
+{
+	return render_mode == RenderCivilians;
+}
+
 State::State(int width, int height)
 	: xrel(Renderer::border)
 	, yrel(Renderer::border)
 	, zoom(.5)
-	, mouse_down(false)
+	, mouse_down_unmoved(false)
 	, width(width)
 	, height(height)
-	, selected_tile({ -1, -1 })
-	, render_military(true)
-	, render_civilians(true)
+	, selected_point({ -1, -1 })
+	, render_mode(RenderCivilians)
 	, render_resources(false)
 {
 	generate_tiles(tiles, width, height);
@@ -25,86 +34,68 @@ int State::advance_state()
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_KEYDOWN) {
-			if (event.key.keysym.sym == 'q') {
+			switch (event.key.keysym.sym) {
+			case 'q':
 				return 1;
-			}
-			if (event.key.keysym.sym == 'm') {
-				render_military = !render_military;
-			}
-			if (event.key.keysym.sym == 'c') {
-				render_civilians = !render_civilians;
-			}
-			if (event.key.keysym.sym == 'r') {
+			case 'm':
+				render_mode = RenderMilitary;
+				break;
+			case 'c':
+				render_mode = RenderCivilians;
+				break;
+			case 'r':
 				render_resources = !render_resources;
+				break;
+			case 'i':
+				Tile& selected_tile = tile(selected_point);
+				if (render_civilians() && selected_tile.civilian) {
+					if (selected_tile.cover == Forest) {
+						selected_tile.improvement = Mill;
+					}
+					else if (selected_tile.cover == Jungle) {
+					}
+					else if (selected_tile.height == Hill) {
+						selected_tile.improvement = Mine;
+					}
+					else if (selected_tile.type == Plains) {
+						selected_tile.improvement = Farm;
+					}
+					else if (selected_tile.type == Desert) {
+						selected_tile.improvement = Farm;
+					}
+				}
+				break;
 			}
 		}
 		if (event.type == SDL_MOUSEBUTTONDOWN) {
-			mouse_down = true;
+			mouse_down_unmoved = true;
 		}
 		if (event.type == SDL_MOUSEBUTTONUP) {
-			if (mouse_down) {
+			if (mouse_down_unmoved) {
 				printf("Grid (%.0lf, %.0lf)\n", (event.button.x - xrel) / zoom, (event.button.y - yrel) / zoom);
-				Point pressed_tile(
+				Point pressed_point(
 					((event.button.x - xrel) / zoom - Renderer::border) / (Renderer::dim + Renderer::border),
 					((event.button.y - yrel) / zoom - Renderer::border) / (Renderer::dim + Renderer::border));
-				int px = ((pressed_tile.x + 1) * (Renderer::dim + Renderer::border)) * zoom + xrel;
-				int py = ((pressed_tile.y + 1) * (Renderer::dim + Renderer::border)) * zoom + yrel;
+				int px = ((pressed_point.x + 1) * (Renderer::dim + Renderer::border)) * zoom + xrel;
+				int py = ((pressed_point.y + 1) * (Renderer::dim + Renderer::border)) * zoom + yrel;
 				if (event.button.x < px && event.button.y < py) {
-					printf("Button press (%d, %d) (%d, %d)\n", pressed_tile.x, pressed_tile.y, event.button.x, event.button.y);
+					printf("Button press (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y);
 					if (event.button.button == SDL_BUTTON_LEFT) {
-						selected_tile = pressed_tile;
+						selected_point = pressed_point;
 					}
 					if (event.button.button == SDL_BUTTON_RIGHT) {
-						if (selected_tile.y != -1 && selected_tile.x != -1) {
-							const auto mtiles = movement_tiles(selected_tile);
-							auto it = mtiles.find(pressed_tile);
-							if (it != mtiles.end()) {
-								Unit** selected_unit = &tile(selected_tile).unit;
-								assert(*selected_unit);
-								Unit*& pressed_unit = tile(pressed_tile).unit;
-								// TODO: implement "fast movement" where ranged attack range != movement
-								if (pressed_unit) {
-									if ((*selected_unit)->attacks > 0) {
-										if ((*selected_unit)->is_melee()) {
-											Unit*& move_dest = tile(it->second.second).unit;
-											if (move_dest != *selected_unit) {
-												assert(!move_dest);
-												(*selected_unit)->movement = mtiles.find(it->second.second)->second.first;
-												move_dest = *selected_unit;
-												*selected_unit = NULL;
-												selected_tile = it->second.second;
-											}
-											selected_unit = &move_dest;
-										}
-										switch (unit_attack(*selected_unit, pressed_unit, tile(pressed_tile).terrain_cost())) {
-										case 0:
-											break;
-										case 1:
-											selected_tile = pressed_tile;
-											break;
-										case 2:
-											selected_tile = { -1, -1 };
-											break;
-										}
-									}
-								}
-								else {
-									(*selected_unit)->movement = it->second.first;
-									pressed_unit = *selected_unit;
-									*selected_unit = NULL;
-									selected_tile = pressed_tile;
-								}
-							}
+						if (selected_point.y != -1 && selected_point.x != -1) {
+							handle_unit_attack_move(pressed_point);
 						}
 					}
 				}
 				else {
-					selected_tile = { -1, -1 };
+					selected_point = { -1, -1 };
 				}
 			}
 		}
 		if (event.type == SDL_MOUSEMOTION) {
-			mouse_down = false;
+			mouse_down_unmoved = false;
 			if (event.motion.state & SDL_BUTTON_LMASK) {
 				xrel += event.motion.xrel;
 				yrel += event.motion.yrel;
@@ -137,12 +128,93 @@ int State::advance_state()
 	return 0;
 }
 
+void State::handle_unit_attack_move(Point pressed_point)
+{
+	Tile& pressed_tile = tile(pressed_point);
+	Tile* selected_tile = &tile(selected_point);
+	const auto mtiles = movement_tiles(selected_point);
+	auto it = mtiles.find(pressed_point);
+	if (it != mtiles.end()) {
+		if (render_military() && selected_tile->military) {
+			// TODO: implement "fast movement" where ranged attack range != movement
+			if (pressed_tile.military) {
+				if (selected_tile->military->attacks > 0) {
+					if (selected_tile->military->is_melee()) {
+						MilitaryUnit*& move_dest = tile(it->second.second).military;
+						selected_tile->military->movement = it->second.first;
+						if (move_dest != selected_tile->military) {
+							assert(!move_dest);
+							move_dest = selected_tile->military;
+							selected_tile->military = NULL;
+							selected_point = it->second.second;
+							selected_tile = &tile(selected_point);
+						}
+					}
+					--selected_tile->military->attacks;
+					printf("Before: %d, %d ", selected_tile->military->health, pressed_tile.military->health);
+					int selected_damage = selected_tile->military->max_attack() * selected_tile->military->health / selected_tile->military->max_health();
+					int pressed_damage = pressed_tile.military->max_attack() * pressed_tile.military->health / pressed_tile.military->max_health();
+					pressed_tile.military->health -= selected_damage;
+					if (selected_tile->military->is_melee()) {
+						selected_tile->military->health -= pressed_damage;
+						if (pressed_tile.military->health > 0) {
+							if (selected_tile->military->health <= 0) {
+								selected_tile->military = NULL;
+								printf("After: dead, %d\n", pressed_tile.military->health);
+								selected_point = { -1, -1 };
+								return;
+							}
+							else {
+								printf("After: %d, %d\n", selected_tile->military->health, pressed_tile.military->health);
+							}
+						}
+						else {
+							selected_tile->military->movement -= pressed_tile.terrain_cost();
+							pressed_tile.military = selected_tile->military;
+							selected_tile->military = NULL;
+							printf("After: %d, dead\n", pressed_tile.military->health);
+							selected_point = pressed_point;
+							return;
+						}
+					}
+					else {
+						if (pressed_tile.military->health <= 0) {
+							pressed_tile.military = NULL;
+							printf("After: %d, dead\n", selected_tile->military->health);
+						}
+						else {
+							printf("After: %d, %d\n", selected_tile->military->health, pressed_tile.military->health);
+						}
+					}
+				}
+			}
+			else {
+				selected_tile->military->movement = it->second.first;
+				pressed_tile.military = selected_tile->military;
+				selected_tile->military = NULL;
+				selected_point = pressed_point;
+			}
+		}
+		else if (render_civilians() && selected_tile->civilian) {
+			if (!pressed_tile.civilian) {
+				selected_tile->civilian->movement = it->second.first;
+				pressed_tile.civilian = selected_tile->civilian;
+				selected_tile->civilian = 0;
+				selected_point = pressed_point;
+			}
+		}
+	}
+}
+
 std::map<Point, std::pair<int, Point>> State::movement_tiles(const Point& tile) const
 {
 	if (tile.y != -1 && tile.x != -1) {
-		Unit* unit = tiles[tile.y][tile.x].unit;
-		if (unit) {
-			return unit->movement_tiles(tile, tiles);
+		Unit* u = NULL;
+		if (render_civilians()) { u = tiles[tile.y][tile.x].civilian; }
+		if (render_military()) { u = tiles[tile.y][tile.x].military; }
+
+		if (u) {
+			return u->movement_tiles(tile, tiles);
 		}
 	}
 	return {};

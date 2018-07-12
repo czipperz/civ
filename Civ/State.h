@@ -6,19 +6,25 @@
 #include <map>
 #include "Point.h"
 
+enum RenderMode {
+	RenderMilitary, RenderCivilians,
+};
+
 class State
 {
+	void handle_unit_attack_move(Point pressed_point);
 public:
 	double xrel;
 	double yrel;
 	double zoom;
-	bool mouse_down;
+	bool mouse_down_unmoved;
 	int width;
 	int height;
 	std::vector<std::vector<Tile>> tiles;
-	Point selected_tile;
-	bool render_military;
-	bool render_civilians;
+	Point selected_point;
+	RenderMode render_mode;
+	bool render_military() const;
+	bool render_civilians() const;
 	bool render_resources;
 
 	State(int width, int height);

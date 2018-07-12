@@ -64,6 +64,19 @@ Resources Tile::resources() const
 		r.food = 0;
 		r.production = 0;
 	}
+	switch (improvement) {
+	case Unimproved:
+		break;
+	case Farm:
+		++r.food;
+		break;
+	case Mine:
+		++r.production;
+		break;
+	case Mill:
+		++r.production;
+		break;
+	}
 	return r;
 }
 
@@ -71,9 +84,7 @@ void generate_tiles(std::vector<std::vector<Tile>>& tiles, int width, int height
 {
 	for (int y = 0; y < height; ++y) {
 		std::vector<Tile> v;
-		for (int x = 0; x < width; ++x) {
-			v.push_back(Tile());
-		}
+		v.insert(v.begin(), width, Tile());
 		tiles.push_back(v);
 	}
 
@@ -81,7 +92,10 @@ void generate_tiles(std::vector<std::vector<Tile>>& tiles, int width, int height
 		for (int x = 0; x < width; ++x) {
 			tiles[y][x].type = Plains;
 			tiles[y][x].cover = NoCover;
-			tiles[y][x].unit = NULL;
+			tiles[y][x].height = Flat;
+			tiles[y][x].improvement = Unimproved;
+			tiles[y][x].military = NULL;
+			tiles[y][x].civilian = NULL;
 		}
 	}
 

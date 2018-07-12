@@ -24,8 +24,10 @@ public:
 	SDL_Texture* military_background;
 	SDL_Texture* military_background_selected;
 	SDL_Texture* military_background_selected_no_attack;
+	SDL_Texture* civilian_background_selected_no_military;
 	SDL_Texture* rock_slinger;
 	SDL_Texture* clubber;
+	SDL_Texture* worker;
 	SDL_Texture* food;
 	SDL_Texture* production;
 	SDL_Texture* frame;

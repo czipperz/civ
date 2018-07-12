@@ -5,53 +5,6 @@
 #include <map>
 #include "Tile.h"
 
-Unit::Unit(UnitType type)
-	: type(type)
-	, attacks(1)
-{
-	health = max_health();
-	movement = max_movement();
-}
-
-bool Unit::is_melee()
-{
-	switch (type) {
-	case RockSlinger:
-		return false;
-	case Clubber:
-		return true;
-	}
-}
-
-int Unit::max_health()
-{
-	switch (type) {
-	case RockSlinger:
-		return 10;
-	case Clubber:
-		return 13;
-	}
-}
-
-int Unit::max_attack()
-{
-	switch (type) {
-	case RockSlinger:
-		return 4;
-	case Clubber:
-		return 5;
-	}
-}
-
-int Unit::max_movement()
-{
-	switch (type) {
-	case RockSlinger:
-	case Clubber:
-		return 8;
-	}
-}
-
 std::map<Point, std::pair<int, Point>> Unit::movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles)
 {
 	std::map<Point, std::pair<int, Point>> paths1;
@@ -59,7 +12,7 @@ std::map<Point, std::pair<int, Point>> Unit::movement_tiles(Point p, const std::
 	auto* paths_in = &paths1;
 	auto* paths_out = &paths2;
 
-	paths_out->insert(std::make_pair(p, std::make_pair(movement, Point {})));
+	paths_out->insert(std::make_pair(p, std::make_pair(movement, Point{})));
 
 	bool force_continue;
 	do {
@@ -103,39 +56,72 @@ std::map<Point, std::pair<int, Point>> Unit::movement_tiles(Point p, const std::
 	return *paths_out;
 }
 
-int unit_attack(Unit*& u, Unit*& other, int other_cost)
+MilitaryUnit::MilitaryUnit(MilitaryUnitType type)
+	: type(type)
+	, attacks(1)
 {
-	--u->attacks;
-	printf("Before: %d, %d ", u->health, other->health);
-	other->health -= u->max_attack() * u->health / u->max_health();
-	if (u->is_melee()) {
-		if (other->health > 0) {
-			u->health -= other->max_attack() * other->health / other->max_health();
-			if (u->health <= 0) { 
-				u = NULL;
-				printf("After: dead, %d\n", other->health);
-				return 2;
-			}
-			else {
-				printf("After: %d, %d\n", u->health, other->health);
-			}
-		}
-		else {
-			u->movement -= other_cost;
-			other = u;
-			u = NULL;
-			printf("After: %d, dead\n", other->health);
-			return 1;
-		}
+	health = max_health();
+	movement = max_movement();
+}
+
+bool MilitaryUnit::is_melee()
+{
+	switch (type) {
+	case RockSlinger:
+		return false;
+	case Clubber:
+		return true;
 	}
-	else {
-		if (other->health <= 0) {
-			other = NULL;
-			printf("After: %d, dead\n", u->health);
-		}
-		else {
-			printf("After: %d, %d\n", u->health, other->health);
-		}
+}
+
+int MilitaryUnit::max_health()
+{
+	switch (type) {
+	case RockSlinger:
+		return 10;
+	case Clubber:
+		return 13;
 	}
-	return 0;
+}
+
+int MilitaryUnit::max_attack()
+{
+	switch (type) {
+	case RockSlinger:
+		return 4;
+	case Clubber:
+		return 5;
+	}
+}
+
+int MilitaryUnit::max_movement()
+{
+	switch (type) {
+	case RockSlinger:
+	case Clubber:
+		return 8;
+	}
+}
+
+CivilianUnit::CivilianUnit(CivilianUnitType type)
+	: type(type)
+{
+	health = max_health();
+	movement = max_movement();
+}
+
+int CivilianUnit::max_health()
+{
+	switch (type) {
+	case Worker:
+		return 8;
+	}
+}
+
+int CivilianUnit::max_movement()
+{
+	switch (type) {
+	case Worker:
+		return 8;
+	}
 }
