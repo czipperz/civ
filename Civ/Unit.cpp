@@ -5,6 +5,7 @@
 #include <map>
 #include "Tile.h"
 #include "Player.h"
+#include <algorithm>
 
 std::map<Point, std::pair<int, Point>> Unit::movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles)
 {
@@ -66,16 +67,6 @@ MilitaryUnit::MilitaryUnit(Player* p, MilitaryUnitType type)
 	movement = max_movement();
 }
 
-bool MilitaryUnit::is_melee()
-{
-	switch (type) {
-	case RockSlinger:
-		return false;
-	case Clubber:
-		return true;
-	}
-}
-
 int MilitaryUnit::max_health()
 {
 	switch (type) {
@@ -83,6 +74,15 @@ int MilitaryUnit::max_health()
 		return 10;
 	case Clubber:
 		return 13;
+	}
+}
+
+int MilitaryUnit::max_movement()
+{
+	switch (type) {
+	case RockSlinger:
+	case Clubber:
+		return 8;
 	}
 }
 
@@ -96,13 +96,24 @@ int MilitaryUnit::max_attack()
 	}
 }
 
-int MilitaryUnit::max_movement()
+bool MilitaryUnit::is_melee()
 {
 	switch (type) {
 	case RockSlinger:
+		return false;
 	case Clubber:
-		return 8;
+		return true;
 	}
+}
+
+void MilitaryUnit::kill()
+{
+	player->military_units.erase(std::find_if(
+		player->military_units.begin(),
+		player->military_units.end(),
+		[&](const std::unique_ptr<MilitaryUnit>& civilian) {
+			return civilian.get() == this;
+		}));
 }
 
 CivilianUnit::CivilianUnit(Player* p, CivilianUnitType type)
@@ -133,14 +144,12 @@ int CivilianUnit::max_movement()
 	}
 }
 
-MilitaryUnit* create_unit(Player* player, MilitaryUnitType type)
+void CivilianUnit::kill()
 {
-	player->military_units.push_back(std::make_unique<MilitaryUnit>(player, type));
-	return player->military_units.back().get();
-}
-
-CivilianUnit* create_unit(Player* player, CivilianUnitType type)
-{
-	player->civilian_units.push_back(std::make_unique<CivilianUnit>(player, type));
-	return player->civilian_units.back().get();
+	player->civilian_units.erase(std::find_if(
+		player->civilian_units.begin(),
+		player->civilian_units.end(),
+		[&](const std::unique_ptr<CivilianUnit>& civilian) {
+			return civilian.get() == this;
+		}));
 }

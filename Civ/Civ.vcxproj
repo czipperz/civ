@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="City.h" />
     <ClInclude Include="Civ.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Point.h" />
@@ -159,6 +160,7 @@
     <ClInclude Include="Unit.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="City.cpp" />
     <ClCompile Include="Civ.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Point.cpp" />

@@ -88,17 +88,6 @@ void generate_tiles(std::vector<std::vector<Tile>>& tiles, int width, int height
 		tiles.push_back(v);
 	}
 
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) {
-			tiles[y][x].type = Plains;
-			tiles[y][x].cover = NoCover;
-			tiles[y][x].height = Flat;
-			tiles[y][x].improvement = Unimproved;
-			tiles[y][x].military = NULL;
-			tiles[y][x].civilian = NULL;
-		}
-	}
-
 	for (int i = 0; i < 6; ++i) {
 		tiles[rand() % height][rand() % width].type = Desert;
 	}

@@ -18,18 +18,20 @@ enum TileImprovement {
 class MilitaryUnit;
 class CivilianUnit;
 class City;
+class Player;
 class Resources;
 
 class Tile
 {
 public:
-	TileType type;
-	TileCover cover;
-	TileHeight height;
-	TileImprovement improvement;
-	MilitaryUnit* military;
-	CivilianUnit* civilian;
-	City* city;
+	TileType type = Plains;
+	TileCover cover = NoCover;
+	TileHeight height = Flat;
+	TileImprovement improvement = Unimproved;
+	MilitaryUnit* military = 0;
+	CivilianUnit* civilian = 0;
+	City* city = 0;
+	Player* player = 0;
 
 	bool add_forest();
 	bool add_jungle();

@@ -32,6 +32,8 @@ public:
 
 	int max_attack();
 	bool is_melee();
+
+	void kill();
 };
 
 enum CivilianUnitType {
@@ -47,7 +49,6 @@ public:
 
 	int max_health();
 	int max_movement();
-};
 
-MilitaryUnit* create_unit(Player* player, MilitaryUnitType type);
-CivilianUnit* create_unit(Player* player, CivilianUnitType type);
+	void kill();
+};

@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "Unit.h"
 #include "Player.h"
+#include <algorithm>
 
 State::State(int width, int height)
 	: xrel(Renderer::border)
@@ -15,7 +16,7 @@ State::State(int width, int height)
 	, height(height)
 	, selected_point({ -1, -1 })
 	, render_mode(RenderCivilians)
-	, render_resources(false)
+	, render_resources(true)
 {
 	generate_tiles(tiles, width, height);
 }
@@ -34,29 +35,53 @@ int State::advance_state()
 				return 1;
 			case 'm':
 				render_mode = RenderMilitary;
+				render_resources = false;
 				break;
 			case 'c':
 				render_mode = RenderCivilians;
+				render_resources = true;
 				break;
 			case 'r':
 				render_resources = !render_resources;
 				break;
 			case 'i':
-				Tile& selected_tile = tile(selected_point);
-				if (render_civilians() && selected_tile.civilian) {
-					if (selected_tile.cover == Forest) {
-						selected_tile.improvement = Mill;
-					}
-					else if (selected_tile.cover == Jungle) {
-					}
-					else if (selected_tile.height == Hill) {
-						selected_tile.improvement = Mine;
-					}
-					else if (selected_tile.type == Plains) {
-						selected_tile.improvement = Farm;
-					}
-					else if (selected_tile.type == Desert) {
-						selected_tile.improvement = Farm;
+				if (selected_point.y != -1) {
+					Tile& selected_tile = tile(selected_point);
+					if (render_civilians() && selected_tile.civilian) {
+						if (selected_tile.civilian->type == Worker && selected_tile.player == selected_tile.civilian->player) {
+							if (selected_tile.cover == Forest) {
+								selected_tile.improvement = Mill;
+							}
+							else if (selected_tile.cover == Jungle) {
+							}
+							else if (selected_tile.height == Hill) {
+								selected_tile.improvement = Mine;
+							}
+							else if (selected_tile.type == Plains) {
+								selected_tile.improvement = Farm;
+							}
+							else if (selected_tile.type == Desert) {
+								selected_tile.improvement = Farm;
+							}
+						}
+						else if (selected_tile.civilian->type == Settler) {
+							bool has_city = false;
+							for (int y = selected_point.y - 4; y <= selected_point.y + 4; ++y) {
+								if (y < 0 || y >= height) { continue; }
+								for (int x = selected_point.x - 4; x <= selected_point.x + 4; ++x) {
+									if (x < 0 || x >= width) { continue; }
+									if (std::abs(selected_point.y - y) + std::abs(selected_point.x - x) > 4) { continue; }
+									if (tiles[y][x].city) {
+										has_city = true;
+									}
+								}
+							}
+							if (!has_city) {
+								selected_tile.city = selected_tile.civilian->player->create_city(*this, selected_point.x, selected_point.y);
+								selected_tile.civilian->kill();
+								selected_tile.civilian = NULL;
+							}
+						}
 					}
 				}
 				break;
@@ -98,7 +123,7 @@ int State::advance_state()
 		}
 		if (event.type == SDL_MOUSEWHEEL) {
 			if (event.wheel.y > 0) {
-				if (zoom < .75) {
+				if (zoom < 1) {
 					int x, y;
 					SDL_GetMouseState(&x, &y);
 					double new_zoom = zoom + .125;
@@ -153,6 +178,7 @@ void State::handle_unit_attack_move(Point pressed_point)
 						selected_tile->military->health -= pressed_damage;
 						if (pressed_tile.military->health > 0) {
 							if (selected_tile->military->health <= 0) {
+								selected_tile->military->kill();
 								selected_tile->military = NULL;
 								printf("After: dead, %d\n", pressed_tile.military->health);
 								selected_point = { -1, -1 };
@@ -164,6 +190,7 @@ void State::handle_unit_attack_move(Point pressed_point)
 						}
 						else {
 							selected_tile->military->movement -= pressed_tile.terrain_cost();
+							pressed_tile.military->kill();
 							pressed_tile.military = selected_tile->military;
 							selected_tile->military = NULL;
 							printf("After: %d, dead\n", pressed_tile.military->health);
@@ -173,6 +200,7 @@ void State::handle_unit_attack_move(Point pressed_point)
 					}
 					else {
 						if (pressed_tile.military->health <= 0) {
+							pressed_tile.military->kill();
 							pressed_tile.military = NULL;
 							printf("After: %d, dead\n", selected_tile->military->health);
 						}
@@ -214,12 +242,12 @@ std::map<Point, std::pair<int, Point>> State::movement_tiles(const Point& tile) 
 	return {};
 }
 
-const Tile & State::tile(Point t) const
+const Tile& State::tile(Point t) const
 {
 	return tiles[t.y][t.x];
 }
 
-Tile & State::tile(Point t)
+Tile& State::tile(Point t)
 {
 	return tiles[t.y][t.x];
 }

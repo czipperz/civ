@@ -133,7 +133,7 @@ Renderer::Renderer(int width, int height)
 	SDL_RenderClear(renderer);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	{
-		SDL_Rect middle = { border / 2, border / 2, dim - border, dim - border };
+		SDL_Rect middle = { border / 4, border / 4, dim - border / 2, dim - border / 2 };
 		SDL_RenderFillRect(renderer, &middle);
 	}
 
@@ -149,7 +149,7 @@ Renderer::Renderer(int width, int height)
 	SDL_RenderClear(renderer);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	{
-		SDL_Rect middle = { border / 2, border / 2, dim - border, dim - border };
+		SDL_Rect middle = { border / 4, border / 4, dim - border / 2, dim - border / 2 };
 		SDL_RenderFillRect(renderer, &middle);
 	}
 
@@ -157,6 +157,7 @@ Renderer::Renderer(int width, int height)
 	military_background_selected = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/MilitaryOutlineSelected.png");
 	military_background_selected_no_attack = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/MilitaryOutlineSelectedNoAttack.png");
 	civilian_background_selected_no_military = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/CivilianOutlineSelectedNoMilitary.png");
+	city_overlay = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/CityOverlay.png");
 	rock_slinger = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/RockSlinger.png");
 	clubber = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Clubber.png");
 	worker = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Worker.png");
@@ -180,6 +181,7 @@ Renderer::~Renderer()
 	SDL_DestroyTexture(settler);
 	SDL_DestroyTexture(worker);
 	SDL_DestroyTexture(rock_slinger);
+	SDL_DestroyTexture(city_overlay);
 	SDL_DestroyTexture(civilian_background_selected_no_military);
 	SDL_DestroyTexture(military_background_selected_no_attack);
 	SDL_DestroyTexture(military_background_selected);
@@ -209,6 +211,34 @@ void Renderer::render(const State& state)
 			dest.y = (dim + border) * y + border / 2;
 			dest.w = dim + border;
 			dest.h = dim + border;
+			Player* player = state.tiles[y][x].player;
+			if (player) {
+				SDL_Color color;
+				switch (player->civilization) {
+				case America:
+					color.r = 0x00;
+					color.g = 0x00;
+					color.b = 0x99;
+					break;
+				case Britain:
+					color.r = 0x77;
+					color.g = 0;
+					color.b = 0;
+					break;
+				}
+				SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 0xFF);
+				SDL_RenderFillRect(renderer, &dest);
+			}
+		}
+	}
+
+	for (int y = 0; y < state.height; ++y) {
+		for (int x = 0; x < state.width; ++x) {
+			SDL_Rect dest;
+			dest.x = (dim + border) * x + border * 3 / 4;
+			dest.y = (dim + border) * y + border * 3 / 4;
+			dest.w = dim + border / 2;
+			dest.h = dim + border / 2;
 			const Tile& tile = state.tiles[y][x];
 			Player* player = NULL;
 			if (state.render_military() && tile.military) {
@@ -221,12 +251,12 @@ void Renderer::render(const State& state)
 				SDL_Color color;
 				switch (player->civilization) {
 				case America:
-					color.r = 0;
-					color.g = 0;
+					color.r = 0x44;
+					color.g = 0x77;
 					color.b = 0xFF;
 					break;
 				case Britain:
-					color.r = 0xFF;
+					color.r = 0xDD;
 					color.g = 0;
 					color.b = 0;
 					break;
@@ -328,6 +358,9 @@ void Renderer::render(const State& state)
 			dest.w = dim;
 			dest.h = dim;
 			const Tile& tile = state.tiles[y][x];
+			if (tile.city) {
+				SDL_RenderCopy(renderer, city_overlay, NULL, &dest);
+			}
 			if (state.render_civilians() && tile.civilian) {
 				if (state.selected_point.x == x && state.selected_point.y == y) {
 					if (tile.military) {
@@ -346,6 +379,7 @@ void Renderer::render(const State& state)
 					break;
 				case Settler:
 					SDL_RenderCopy(renderer, settler, NULL, &dest);
+					break;
 				}
 			}
 			if (state.render_military() && tile.military) {
