@@ -10,6 +10,8 @@ extern int window_height;
 
 class Renderer
 {
+	void render_frame(const State&);
+	void present_screen(const State&);
 public:
 	SDL_Window* window;
 	SDL_Renderer* renderer;

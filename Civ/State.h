@@ -18,6 +18,7 @@ class State
 	void handle_unit_attack_move(Point pressed_point);
 	void zoom_in();
 	void zoom_out();
+	Point to_grid(Point mouse_point);
 public:
 	double xrel;
 	double yrel;

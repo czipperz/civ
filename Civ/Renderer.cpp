@@ -200,6 +200,11 @@ Renderer::~Renderer()
 
 void Renderer::render(const State& state)
 {
+	render_frame(state);
+	present_screen(state);
+}
+
+void Renderer::render_frame(const State& state) {
 	SDL_SetRenderTarget(renderer, frame);
 	SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
 	SDL_RenderClear(renderer);
@@ -433,13 +438,45 @@ void Renderer::render(const State& state)
 			}
 		}
 	}
+}
 
+void Renderer::present_screen(const State& state) {
 	SDL_SetRenderTarget(renderer, NULL);
-	SDL_Rect rect;
-	rect.x = state.xrel;
-	rect.y = state.yrel;
-	rect.w = window_width / state.zoom;
-	rect.h = window_height / state.zoom;
-	SDL_RenderCopy(renderer, frame, &rect, NULL);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
+	SDL_RenderClear(renderer);
+	{
+		SDL_Rect src;
+		src.x = state.xrel;
+		src.y = state.yrel;
+		src.w = window_width / state.zoom;
+		src.h = window_height / state.zoom;
+		// handle when the user has gone partially off the frame.
+		SDL_Rect dest;
+		if (state.xrel < 0) {
+			dest.x = -state.xrel * state.zoom;
+			dest.w = window_width - dest.x;
+		}
+		else if (state.xrel >= frame_width - window_width / state.zoom) {
+			dest.x = 0;
+			dest.w = window_width - (state.xrel - (frame_width - window_width / state.zoom)) * state.zoom;
+		}
+		else {
+			dest.x = 0;
+			dest.w = window_width;
+		}
+		if (state.yrel < 0) {
+			dest.y = -state.yrel * state.zoom;
+			dest.h = window_height - dest.y;
+		}
+		else if (state.yrel >= frame_height - window_height / state.zoom) {
+			dest.y = 0;
+			dest.h = window_height - (state.yrel - (frame_height - window_height / state.zoom)) * state.zoom;
+		}
+		else {
+			dest.y = 0;
+			dest.h = window_height;
+		}
+		SDL_RenderCopy(renderer, frame, &src, &dest);
+	}
 	SDL_RenderPresent(renderer);
 }

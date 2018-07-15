@@ -6,6 +6,24 @@
 #include "Unit.h"
 #include "Player.h"
 #include <algorithm>
+#include <math.h>
+
+Point State::to_grid(Point mouse_point) {
+	Point pressed_point(
+		floor((mouse_point.x / zoom + xrel - Renderer::border) / (Renderer::dim + Renderer::border)),
+		floor((mouse_point.y / zoom + yrel - Renderer::border) / (Renderer::dim + Renderer::border)));
+	if (pressed_point.x < 0 || pressed_point.y < 0 || pressed_point.x >= width || pressed_point.y >= height) {
+		return { -1, -1 };
+	}
+	int max_x = ((pressed_point.x + 1) * (Renderer::dim + Renderer::border) - xrel) * zoom;
+	int max_y = ((pressed_point.y + 1) * (Renderer::dim + Renderer::border) - yrel) * zoom;
+	if (mouse_point.x < max_x && mouse_point.y < max_y) {
+		return pressed_point;
+	}
+	else {
+		return { -1, -1 };
+	}
+}
 
 State::State(int width, int height)
 	: xrel(0)
@@ -114,25 +132,21 @@ int State::advance_state()
 		}
 		if (event.type == SDL_MOUSEBUTTONUP) {
 			if (mouse_down_unmoved) {
-				printf("Grid (%.0lf, %.0lf)\n", (event.button.x) / zoom + xrel, (event.button.y) / zoom + yrel);
-				Point pressed_point(
-					((event.button.x) / zoom + xrel - Renderer::border) / (Renderer::dim + Renderer::border),
-					((event.button.y) / zoom + yrel - Renderer::border) / (Renderer::dim + Renderer::border));
-				int px = ((pressed_point.x + 1) * (Renderer::dim + Renderer::border) - xrel) * zoom;
-				int py = ((pressed_point.y + 1) * (Renderer::dim + Renderer::border) - yrel) * zoom;
-				if (event.button.x < px && event.button.y < py) {
-					printf("Button press (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y);
-					if (event.button.button == SDL_BUTTON_LEFT) {
-						selected_point = pressed_point;
+				Point pressed_point = to_grid({ event.button.x, event.button.y });
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					if (pressed_point.y != -1) {
+						printf("Select (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y); 
 					}
-					if (event.button.button == SDL_BUTTON_RIGHT) {
-						if (selected_point.y != -1 && selected_point.x != -1) {
-							handle_unit_attack_move(pressed_point);
-						}
+					else {
+						printf("Deselect\n");
 					}
+					selected_point = pressed_point;
 				}
-				else {
-					selected_point = { -1, -1 };
+				if (event.button.button == SDL_BUTTON_RIGHT) {
+					if (pressed_point.y != -1 && selected_point.y != -1) {
+						printf("Move or attack (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y);
+						handle_unit_attack_move(pressed_point);
+					}
 				}
 			}
 		}
