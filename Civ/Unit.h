@@ -12,7 +12,7 @@ public:
 	int health;
 	int movement;
 
-	std::map<Point, std::pair<int, Point>> movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles);
+	std::map<Point, std::pair<int, Point>> movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles) const;
 };
 
 enum MilitaryUnitType {
@@ -27,14 +27,16 @@ public:
 
 	MilitaryUnit(Player* player, MilitaryUnitType type);
 
-	int max_health();
-	int max_movement();
+	int max_health() const;
+	int max_movement() const;
 
-	int max_attack();
-	int attack_range();
-	bool is_melee();
-	std::map<Point, std::pair<int, Point>> attack_tiles(Point p, const std::vector<std::vector<Tile>>& tiles);
+	int max_attack() const;
+	int attack_range() const;
+	bool is_melee() const;
+	int max_num_attacks() const;
+	std::map<Point, std::pair<int, Point>> attack_tiles(Point p, const std::vector<std::vector<Tile>>& tiles) const;
 
+	void end_turn();
 	void kill();
 };
 
@@ -49,8 +51,9 @@ public:
 
 	CivilianUnit(Player* player, CivilianUnitType type);
 
-	int max_health();
-	int max_movement();
+	int max_health() const;
+	int max_movement() const;
 
+	void end_turn();
 	void kill();
 };

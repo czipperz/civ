@@ -34,3 +34,9 @@ City* Player::create_city(State& state, int x, int y)
 	}
 	return cities.back().get();
 }
+
+void Player::end_turn()
+{
+	for (auto& m : military_units) { m->end_turn(); }
+	for (auto& c : civilian_units) { c->end_turn(); }
+}

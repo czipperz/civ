@@ -71,21 +71,20 @@ static std::map<Point, std::pair<int, Point>> move_attack_tiles(
 	return *paths_out;
 }
 
-std::map<Point, std::pair<int, Point>> Unit::movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles)
+std::map<Point, std::pair<int, Point>> Unit::movement_tiles(Point p, const std::vector<std::vector<Tile>>& tiles) const
 {
 	return move_attack_tiles(p, tiles, movement, terrain_cost_move);
 }
 
 MilitaryUnit::MilitaryUnit(Player* p, MilitaryUnitType type)
 	: type(type)
-	, attacks(1)
 {
 	player = p;
 	health = max_health();
-	movement = max_movement();
+	end_turn();
 }
 
-int MilitaryUnit::max_health()
+int MilitaryUnit::max_health() const
 {
 	switch (type) {
 	case RockSlinger:
@@ -95,7 +94,7 @@ int MilitaryUnit::max_health()
 	}
 }
 
-int MilitaryUnit::max_movement()
+int MilitaryUnit::max_movement() const
 {
 	switch (type) {
 	case RockSlinger:
@@ -104,7 +103,7 @@ int MilitaryUnit::max_movement()
 	}
 }
 
-int MilitaryUnit::max_attack()
+int MilitaryUnit::max_attack() const
 {
 	switch (type) {
 	case RockSlinger:
@@ -114,7 +113,7 @@ int MilitaryUnit::max_attack()
 	}
 }
 
-int MilitaryUnit::attack_range()
+int MilitaryUnit::attack_range() const
 {
 	switch (type) {
 	case RockSlinger:
@@ -124,7 +123,15 @@ int MilitaryUnit::attack_range()
 	}
 }
 
-bool MilitaryUnit::is_melee()
+int MilitaryUnit::max_num_attacks() const
+{
+	switch (type) {
+	default:
+		return 1;
+	}
+}
+
+bool MilitaryUnit::is_melee() const
 {
 	switch (type) {
 	case RockSlinger:
@@ -132,6 +139,12 @@ bool MilitaryUnit::is_melee()
 	case Clubber:
 		return true;
 	}
+}
+
+void MilitaryUnit::end_turn()
+{
+	movement = max_movement();
+	attacks = max_num_attacks();
 }
 
 void MilitaryUnit::kill()
@@ -144,7 +157,7 @@ void MilitaryUnit::kill()
 		}));
 }
 
-std::map<Point, std::pair<int, Point>> MilitaryUnit::attack_tiles(Point p, const std::vector<std::vector<Tile>>& tiles)
+std::map<Point, std::pair<int, Point>> MilitaryUnit::attack_tiles(Point p, const std::vector<std::vector<Tile>>& tiles) const
 {
 	if (is_melee()) {
 		return move_attack_tiles(p, tiles, attack_range(), terrain_cost_move);
@@ -159,27 +172,32 @@ CivilianUnit::CivilianUnit(Player* p, CivilianUnitType type)
 {
 	player = p;
 	health = max_health();
+	end_turn();
+}
+
+int CivilianUnit::max_health() const
+{
+	switch (type) {
+	case Worker:
+		return 8;
+	case Settler:
+		return 8;
+	}
+}
+
+int CivilianUnit::max_movement() const
+{
+	switch (type) {
+	case Worker:
+		return 8;
+	case Settler:
+		return 8;
+	}
+}
+
+void CivilianUnit::end_turn()
+{
 	movement = max_movement();
-}
-
-int CivilianUnit::max_health()
-{
-	switch (type) {
-	case Worker:
-		return 8;
-	case Settler:
-		return 8;
-	}
-}
-
-int CivilianUnit::max_movement()
-{
-	switch (type) {
-	case Worker:
-		return 8;
-	case Settler:
-		return 8;
-	}
 }
 
 void CivilianUnit::kill()

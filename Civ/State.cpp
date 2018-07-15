@@ -69,6 +69,14 @@ void State::zoom_out() {
 	}
 }
 
+void State::end_turn() {
+	printf("Ending turn %d\n", turn);
+	for (auto& p : players) {
+		p->end_turn();
+	}
+	++turn;
+}
+
 int State::advance_state()
 {
 	SDL_Event event;
@@ -136,6 +144,9 @@ int State::advance_state()
 						}
 					}
 				}
+				break;
+			case SDLK_RETURN:
+				end_turn();
 				break;
 			}
 		}

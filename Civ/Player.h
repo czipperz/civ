@@ -24,5 +24,7 @@ public:
 	MilitaryUnit* create_military_unit(MilitaryUnitType type);
 	CivilianUnit* create_civilian_unit(CivilianUnitType type);
 	City* create_city(State&, int x, int y);
+
+	void end_turn();
 };
 
