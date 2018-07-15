@@ -8,8 +8,8 @@
 #include <algorithm>
 
 State::State(int width, int height)
-	: xrel(Renderer::border)
-	, yrel(Renderer::border)
+	: xrel(0)
+	, yrel(0)
 	, zoom(.5)
 	, mouse_down_unmoved(false)
 	, width(width)
@@ -23,6 +23,31 @@ State::State(int width, int height)
 
 State::~State()
 {
+}
+
+/// The goal of zooming is to have the point the cursor is at remain stationary.
+/// Thus we find the point of the cursor, x / zoom, and offset it
+/// by the point in the new frame, x / new_zoom.
+void State::zoom_in() {
+	if (zoom < 1) {
+		int x, y;
+		SDL_GetMouseState(&x, &y);
+		double new_zoom = zoom + .125;
+		xrel += x / zoom - x / new_zoom;
+		yrel += y / zoom - y / new_zoom;
+		zoom = new_zoom;
+	}
+}
+
+void State::zoom_out() {
+	if (zoom > .375) {
+		int x, y;
+		SDL_GetMouseState(&x, &y);
+		double new_zoom = zoom - .125;
+		xrel += x / zoom - x / new_zoom;
+		yrel += y / zoom - y / new_zoom;
+		zoom = new_zoom;
+	}
 }
 
 int State::advance_state()
@@ -89,12 +114,12 @@ int State::advance_state()
 		}
 		if (event.type == SDL_MOUSEBUTTONUP) {
 			if (mouse_down_unmoved) {
-				printf("Grid (%.0lf, %.0lf)\n", (event.button.x - xrel) / zoom, (event.button.y - yrel) / zoom);
+				printf("Grid (%.0lf, %.0lf)\n", (event.button.x) / zoom + xrel, (event.button.y) / zoom + yrel);
 				Point pressed_point(
-					((event.button.x - xrel) / zoom - Renderer::border) / (Renderer::dim + Renderer::border),
-					((event.button.y - yrel) / zoom - Renderer::border) / (Renderer::dim + Renderer::border));
-				int px = ((pressed_point.x + 1) * (Renderer::dim + Renderer::border)) * zoom + xrel;
-				int py = ((pressed_point.y + 1) * (Renderer::dim + Renderer::border)) * zoom + yrel;
+					((event.button.x) / zoom + xrel - Renderer::border) / (Renderer::dim + Renderer::border),
+					((event.button.y) / zoom + yrel - Renderer::border) / (Renderer::dim + Renderer::border));
+				int px = ((pressed_point.x + 1) * (Renderer::dim + Renderer::border) - xrel) * zoom;
+				int py = ((pressed_point.y + 1) * (Renderer::dim + Renderer::border) - yrel) * zoom;
 				if (event.button.x < px && event.button.y < py) {
 					printf("Button press (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y);
 					if (event.button.button == SDL_BUTTON_LEFT) {
@@ -114,30 +139,16 @@ int State::advance_state()
 		if (event.type == SDL_MOUSEMOTION) {
 			mouse_down_unmoved = false;
 			if (event.motion.state & SDL_BUTTON_LMASK) {
-				xrel += event.motion.xrel;
-				yrel += event.motion.yrel;
+				xrel -= event.motion.xrel / zoom;
+				yrel -= event.motion.yrel / zoom;
 			}
 		}
 		if (event.type == SDL_MOUSEWHEEL) {
 			if (event.wheel.y > 0) {
-				if (zoom < 1) {
-					int x, y;
-					SDL_GetMouseState(&x, &y);
-					double new_zoom = zoom + .125;
-					xrel -= x * zoom;
-					yrel -= y * zoom;
-					zoom = new_zoom;
-				}
+				zoom_in();
 			}
 			if (event.wheel.y < 0) {
-				if (zoom > .375) {
-					int x, y;
-					SDL_GetMouseState(&x, &y);
-					double new_zoom = zoom - .125;
-					xrel += x * zoom;
-					yrel += y * zoom;
-					zoom = new_zoom;
-				}
+				zoom_out();
 			}
 		}
 	}

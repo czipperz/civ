@@ -16,6 +16,8 @@ enum RenderMode {
 class State
 {
 	void handle_unit_attack_move(Point pressed_point);
+	void zoom_in();
+	void zoom_out();
 public:
 	double xrel;
 	double yrel;

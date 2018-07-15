@@ -424,8 +424,8 @@ void Renderer::render(const State& state)
 	}
 	SDL_SetRenderTarget(renderer, NULL);
 	SDL_Rect rect;
-	rect.x = -state.xrel / state.zoom;
-	rect.y = -state.yrel / state.zoom;
+	rect.x = state.xrel;
+	rect.y = state.yrel;
 	rect.w = window_width / state.zoom;
 	rect.h = window_height / state.zoom;
 	SDL_RenderCopy(renderer, frame, &rect, NULL);
