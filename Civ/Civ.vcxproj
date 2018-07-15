@@ -72,15 +72,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\gregorcj\source\repos\Civ\SDL2_ttf-2.0.14\include;C:\Users\gregorcj\source\repos\Civ\SDL2_image-2.0.3\include;C:\Users\gregorcj\source\repos\Civ\SDL2-2.0.8\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\gregorcj\source\repos\Civ\SDL2_ttf-2.0.14\lib\x86;C:\Users\gregorcj\source\repos\Civ\SDL2_image-2.0.3\lib\x86;C:\Users\gregorcj\source\repos\Civ\SDL2-2.0.8\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\gregorcj\source\repos\Civ\SDL2_ttf-2.0.14\include;C:\Users\gregorcj\source\repos\Civ\SDL2_image-2.0.3\include;C:\Users\gregorcj\source\repos\Civ\SDL2-2.0.8\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\gregorcj\source\repos\Civ\SDL2_ttf-2.0.14\lib\x64;C:\Users\gregorcj\source\repos\Civ\SDL2_image-2.0.3\lib\x64;C:\Users\gregorcj\source\repos\Civ\SDL2-2.0.8\lib\x64;$(LibraryPath)</LibraryPath>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Users\gregorcj\source\repos\Civ\SDL2_ttf-2.0.14\include;C:\Users\gregorcj\source\repos\Civ\SDL2_image-2.0.3\include;C:\Users\gregorcj\source\repos\Civ\SDL2-2.0.8\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\gregorcj\source\repos\Civ\SDL2_ttf-2.0.14\lib\x86;C:\Users\gregorcj\source\repos\Civ\SDL2_image-2.0.3\lib\x86;C:\Users\gregorcj\source\repos\Civ\SDL2-2.0.8\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Users\gregorcj\source\repos\Civ\SDL2_ttf-2.0.14\include;C:\Users\gregorcj\source\repos\Civ\SDL2_image-2.0.3\include;C:\Users\gregorcj\source\repos\Civ\SDL2-2.0.8\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\gregorcj\source\repos\Civ\SDL2_ttf-2.0.14\lib\x64;C:\Users\gregorcj\source\repos\Civ\SDL2_image-2.0.3\lib\x64;C:\Users\gregorcj\source\repos\Civ\SDL2-2.0.8\lib\x64;$(LibraryPath)</LibraryPath>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -94,6 +104,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -104,10 +115,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -126,6 +139,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,12 +152,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -176,23 +192,6 @@
     <ClCompile Include="Tile.cpp" />
     <ClCompile Include="Unit.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\sdl2.new.redist.2.0.8\build\native\sdl2.new.redist.targets" Condition="Exists('..\packages\sdl2.new.redist.2.0.8\build\native\sdl2.new.redist.targets')" />
-    <Import Project="..\packages\sdl2.new.2.0.8\build\native\sdl2.new.targets" Condition="Exists('..\packages\sdl2.new.2.0.8\build\native\sdl2.new.targets')" />
-    <Import Project="..\packages\vii.SDL2_image.redist.2.0.3\build\native\vii.SDL2_image.redist.targets" Condition="Exists('..\packages\vii.SDL2_image.redist.2.0.3\build\native\vii.SDL2_image.redist.targets')" />
-    <Import Project="..\packages\vii.SDL2_image.2.0.3\build\native\vii.SDL2_image.targets" Condition="Exists('..\packages\vii.SDL2_image.2.0.3\build\native\vii.SDL2_image.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\sdl2.new.redist.2.0.8\build\native\sdl2.new.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sdl2.new.redist.2.0.8\build\native\sdl2.new.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\sdl2.new.2.0.8\build\native\sdl2.new.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sdl2.new.2.0.8\build\native\sdl2.new.targets'))" />
-    <Error Condition="!Exists('..\packages\vii.SDL2_image.redist.2.0.3\build\native\vii.SDL2_image.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\vii.SDL2_image.redist.2.0.3\build\native\vii.SDL2_image.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\vii.SDL2_image.2.0.3\build\native\vii.SDL2_image.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\vii.SDL2_image.2.0.3\build\native\vii.SDL2_image.targets'))" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

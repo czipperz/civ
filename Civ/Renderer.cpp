@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include "Unit.h"
 #include "State.h"
 #include <assert.h>
@@ -11,6 +12,30 @@
 
 int window_width = 640;
 int window_height = 480;
+
+static void render_text(SDL_Renderer* renderer, TTF_Font* font, const char* text, int x, int y, SDL_Color color) {
+	//SDL_Color color;
+	//SDL_GetRenderDrawColor(renderer, &color.r, &color.g, &color.b, &color.a);
+	SDL_Surface* surface = TTF_RenderText_Solid(font, text, color);
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_Rect dest;
+	dest.x = x;
+	dest.y = y;
+	dest.w = surface->w;
+	dest.h = surface->h;
+	SDL_RenderCopy(renderer, texture, NULL, &dest);
+	SDL_DestroyTexture(texture);
+	SDL_FreeSurface(surface);
+}
+
+static SDL_Texture* new_texture_text(SDL_Renderer* renderer, TTF_Font* font, const char* text, SDL_Color color, int* width, int* height) {
+	SDL_Surface* surface = TTF_RenderText_Solid(font, text, color);
+	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+	*width = surface->w;
+	*height = surface->h;
+	SDL_FreeSurface(surface);
+	return texture;
+}
 
 static void save_texture(const char* file_name, SDL_Renderer* renderer, SDL_Texture* texture) {
 	SDL_Texture* target = SDL_GetRenderTarget(renderer);
@@ -31,6 +56,8 @@ Renderer::Renderer(int width, int height)
 	window = SDL_CreateWindow("Civ",
 		0 /*SDL_WINDOWPOS_UNDEFINED*/, SDL_WINDOWPOS_UNDEFINED,
 		window_width, window_height, SDL_WINDOW_SHOWN);
+	//SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+	//SDL_GetWindowSize(window, &window_width, &window_height);
 	if (!window) {
 		fprintf(stderr, "SDL window creation error: %s\n", SDL_GetError());
 		exit(1);
@@ -170,10 +197,17 @@ Renderer::Renderer(int width, int height)
 		fprintf(stderr, "SDL texture creation error: %s\n", SDL_GetError());
 		exit(1);
 	}
+
+	font = TTF_OpenFont("C:/Windows/Fonts/Cambria.ttc", 16);
+	if (!font) {
+		fprintf(stderr, "Font loading error: %s\n", TTF_GetError());
+		exit(1);
+	}
 }
 
 Renderer::~Renderer()
 {
+	TTF_CloseFont(font);
 	SDL_DestroyTexture(frame);
 	SDL_DestroyTexture(production);
 	SDL_DestroyTexture(food);
@@ -477,6 +511,25 @@ void Renderer::present_screen(const State& state) {
 			dest.h = window_height;
 		}
 		SDL_RenderCopy(renderer, frame, &src, &dest);
+	}
+	{
+		const int top_bar_height = 22;
+		SDL_Rect top_bar = { 0, 0, window_width, top_bar_height };
+		SDL_SetRenderDrawColor(renderer, 0xF2, 0xC6, 0xAB, 0xFF);
+		SDL_RenderFillRect(renderer, &top_bar);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
+		SDL_RenderDrawLine(renderer, 0, top_bar_height, window_width, top_bar_height);
+
+		{
+			char buffer[1024];
+			snprintf(buffer, 1024, "Turn %d", state.turn);
+			SDL_Rect text;
+			SDL_Texture* text_texture = new_texture_text(renderer, font, buffer, SDL_Color{ 0, 0, 0, 0xFF }, &text.w, &text.h);
+			text.x = window_width / 2 - text.w / 2;
+			text.y = 0;
+			SDL_RenderCopy(renderer, text_texture, NULL, &text);
+			SDL_DestroyTexture(text_texture);
+		}
 	}
 	SDL_RenderPresent(renderer);
 }

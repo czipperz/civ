@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL.h>
+#include <SDL_ttf.h>
 #include <vector>
 #include "Tile.h"
 
@@ -35,6 +36,7 @@ public:
 	SDL_Texture* food;
 	SDL_Texture* production;
 	SDL_Texture* frame;
+	TTF_Font* font;
 	int frame_width;
 	int frame_height;
 	static const int dim = 128;

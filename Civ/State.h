@@ -24,22 +24,31 @@ public:
 	double yrel;
 	double zoom;
 	bool mouse_down_unmoved;
+
 	int width;
 	int height;
+
 	std::vector<std::vector<Tile>> tiles;
 	Point selected_point;
+
 	std::vector<std::unique_ptr<Player>> players;
 
 	RenderMode render_mode;
 	bool render_resources;
 
+	int turn;
+
 	State(int width, int height);
 	~State();
+
 	int advance_state();
+
 	std::map<Point, std::pair<int, Point>> movement_tiles(const Point& tile) const;
 	std::map<Point, std::pair<int, Point>> attack_tiles(const Point& tile) const;
+
 	const Tile& tile(Point t) const;
 	Tile& tile(Point t);
+
 	bool render_military() const;
 	bool render_civilians() const;
 };

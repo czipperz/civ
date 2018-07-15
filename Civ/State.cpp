@@ -35,6 +35,7 @@ State::State(int width, int height)
 	, selected_point({ -1, -1 })
 	, render_mode(RenderCivilians)
 	, render_resources(true)
+	, turn(1)
 {
 	generate_tiles(tiles, width, height);
 }
@@ -74,6 +75,17 @@ int State::advance_state()
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_KEYDOWN) {
 			switch (event.key.keysym.sym) {
+			case 's':
+				if (selected_point.y != -1) {
+					tile(selected_point).military = players[0]->create_military_unit(RockSlinger);
+				}
+				break;
+			case 'a':
+				zoom_in();
+				break;
+			case 'o':
+				zoom_out();
+				break;
 			case 'q':
 				return 1;
 			case 'm':
