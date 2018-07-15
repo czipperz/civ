@@ -36,7 +36,7 @@ public:
 	int frame_width;
 	int frame_height;
 	static const int dim = 128;
-	static const int border = 16;
+	static const int border = 32;
 
 	Renderer(int width, int height);
 	~Renderer();

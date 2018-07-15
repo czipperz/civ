@@ -71,9 +71,9 @@ int MilitaryUnit::max_health()
 {
 	switch (type) {
 	case RockSlinger:
-		return 10;
+		return 8;
 	case Clubber:
-		return 13;
+		return 12;
 	}
 }
 

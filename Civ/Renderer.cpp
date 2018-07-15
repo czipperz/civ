@@ -29,7 +29,7 @@ Renderer::Renderer(int width, int height)
 	, frame_height((dim + border) * height + border)
 {
 	window = SDL_CreateWindow("Civ",
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		0 /*SDL_WINDOWPOS_UNDEFINED*/, SDL_WINDOWPOS_UNDEFINED,
 		window_width, window_height, SDL_WINDOW_SHOWN);
 	if (!window) {
 		fprintf(stderr, "SDL window creation error: %s\n", SDL_GetError());
@@ -78,10 +78,10 @@ Renderer::Renderer(int width, int height)
 		for (int x = 0; x < 4; ++x) {
 			if ((x - y) % 2 == 0) {
 				SDL_Rect rect;
-				rect.x = x * dim / 4 + border / 4;
-				rect.y = y * dim / 4 + border / 4;
-				rect.w = dim / 4 - border / 2;
-				rect.h = dim / 4 - border / 2;
+				rect.x = (x + 1) * dim / 5 - dim / 10 + 2;
+				rect.y = (y + 1) * dim / 5 - dim / 10 + 2;
+				rect.w = dim / 5 - 4;
+				rect.h = dim / 5 - 4;
 				SDL_RenderFillRect(renderer, &rect);
 			}
 		}
@@ -100,10 +100,10 @@ Renderer::Renderer(int width, int height)
 		for (int x = 0; x < 4; ++x) {
 			if ((x - y) % 2 == 0) {
 				SDL_Rect rect;
-				rect.x = x * dim / 4 + border / 4;
-				rect.y = y * dim / 4 + border / 4;
-				rect.w = dim / 4 - border / 2;
-				rect.h = dim / 4 - border / 2;
+				rect.x = (x + 1) * dim / 5 - dim / 10 + 2;
+				rect.y = (y + 1) * dim / 5 - dim / 10 + 2;
+				rect.w = dim / 5 - 4;
+				rect.h = dim / 5 - 4;
 				SDL_RenderFillRect(renderer, &rect);
 			}
 		}
@@ -166,7 +166,7 @@ Renderer::Renderer(int width, int height)
 	production = IMG_LoadTexture(renderer, "C:/Users/gregorcj/Pictures/Production.png");
 
 	frame = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, frame_width, frame_height);
-	if (!dim) {
+	if (!frame) {
 		fprintf(stderr, "SDL texture creation error: %s\n", SDL_GetError());
 		exit(1);
 	}
@@ -422,6 +422,7 @@ void Renderer::render(const State& state)
 			}
 		}
 	}
+
 	SDL_SetRenderTarget(renderer, NULL);
 	SDL_Rect rect;
 	rect.x = state.xrel;
