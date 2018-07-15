@@ -159,12 +159,12 @@ void State::handle_unit_attack_move(Point pressed_point)
 {
 	Tile& pressed_tile = tile(pressed_point);
 	Tile* selected_tile = &tile(selected_point);
-	const auto mtiles = movement_tiles(selected_point);
-	auto it = mtiles.find(pressed_point);
-	if (it != mtiles.end()) {
-		if (render_military() && selected_tile->military) {
-			// TODO: implement "fast movement" where ranged attack range != movement
-			if (pressed_tile.military) {
+	if (render_military() && selected_tile->military) {
+		// TODO: implement "fast movement" where ranged attack range != movement
+		if (pressed_tile.military) {
+			const auto mtiles = attack_tiles(selected_point);
+			auto it = mtiles.find(pressed_point);
+			if (it != mtiles.end()) {
 				if (selected_tile->military->player != pressed_tile.military->player && selected_tile->military->attacks > 0) {
 					if (selected_tile->military->is_melee()) {
 						MilitaryUnit*& move_dest = tile(it->second.second).military;
@@ -218,15 +218,23 @@ void State::handle_unit_attack_move(Point pressed_point)
 					}
 				}
 			}
-			else {
+		}
+		else {
+			const auto mtiles = movement_tiles(selected_point);
+			auto it = mtiles.find(pressed_point);
+			if (it != mtiles.end()) {
 				selected_tile->military->movement = it->second.first;
 				pressed_tile.military = selected_tile->military;
 				selected_tile->military = NULL;
 				selected_point = pressed_point;
 			}
 		}
-		else if (render_civilians() && selected_tile->civilian) {
-			if (!pressed_tile.civilian) {
+	}
+	else if (render_civilians() && selected_tile->civilian) {
+		if (!pressed_tile.civilian) {
+			const auto mtiles = movement_tiles(selected_point);
+			auto it = mtiles.find(pressed_point);
+			if (it != mtiles.end()) {
 				selected_tile->civilian->movement = it->second.first;
 				pressed_tile.civilian = selected_tile->civilian;
 				selected_tile->civilian = 0;
@@ -245,6 +253,19 @@ std::map<Point, std::pair<int, Point>> State::movement_tiles(const Point& tile) 
 
 		if (u) {
 			return u->movement_tiles(tile, tiles);
+		}
+	}
+	return {};
+}
+
+std::map<Point, std::pair<int, Point>> State::attack_tiles(const Point& tile) const
+{
+	if (tile.y != -1 && tile.x != -1) {
+		if (render_military()) {
+			MilitaryUnit* u = tiles[tile.y][tile.x].military;
+			if (u) {
+				return u->attack_tiles(tile, tiles);
+			}
 		}
 	}
 	return {};

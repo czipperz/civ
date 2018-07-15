@@ -31,7 +31,9 @@ public:
 	int max_movement();
 
 	int max_attack();
+	int attack_range();
 	bool is_melee();
+	std::map<Point, std::pair<int, Point>> attack_tiles(Point p, const std::vector<std::vector<Tile>>& tiles);
 
 	void kill();
 };

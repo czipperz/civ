@@ -36,6 +36,7 @@ public:
 	~State();
 	int advance_state();
 	std::map<Point, std::pair<int, Point>> movement_tiles(const Point& tile) const;
+	std::map<Point, std::pair<int, Point>> attack_tiles(const Point& tile) const;
 	const Tile& tile(Point t) const;
 	Tile& tile(Point t);
 	bool render_military() const;

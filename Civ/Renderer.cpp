@@ -294,6 +294,17 @@ void Renderer::render(const State& state)
 	}
 
 	if (state.render_military() && state.selected_point.y != -1 && state.tile(state.selected_point).military) {
+		if (state.tile(state.selected_point).military->attacks > 0) {
+			const auto tiles = state.attack_tiles(state.selected_point);
+			for (const auto& tile : tiles) {
+				SDL_Rect dest;
+				dest.x = (dim + border) * tile.first.x + border;
+				dest.y = (dim + border) * tile.first.y + border;
+				dest.w = dim;
+				dest.h = dim;
+				SDL_RenderCopy(renderer, military_move_attack, NULL, &dest);
+			}
+		}
 		const auto tiles = state.movement_tiles(state.selected_point);
 		for (const auto& tile : tiles) {
 			SDL_Rect dest;
