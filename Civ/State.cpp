@@ -39,9 +39,6 @@ int State::advance_state()
 				break;
 			case 'c':
 				render_mode = RenderCivilians;
-				render_resources = true;
-				break;
-			case 'r':
 				render_resources = !render_resources;
 				break;
 			case 'i':
