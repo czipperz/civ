@@ -81,10 +81,10 @@ int State::advance_state()
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
-		if (event.type == SDL_KEYDOWN) {
+		if (event.type == SDL_KEYDOWN && !event.key.repeat) {
 			switch (event.key.keysym.sym) {
 			case 's':
-				if (selected_point.y != -1) {
+				if (selected_point.y != -1 && !tile(selected_point).military) {
 					tile(selected_point).military = players[0]->create_military_unit(RockSlinger);
 				}
 				break;
