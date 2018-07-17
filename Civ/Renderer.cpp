@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include "SDL_FontCache.h"
 #include "Unit.h"
 #include "State.h"
 #include <assert.h>
@@ -12,31 +13,6 @@
 
 int window_width = 640;
 int window_height = 480;
-
-static void render_text(SDL_Renderer* renderer, TTF_Font* font, const char* text, int x, int y, SDL_Color color) {
-	//SDL_Color color;
-	//SDL_GetRenderDrawColor(renderer, &color.r, &color.g, &color.b, &color.a);
-	SDL_Surface* surface = TTF_RenderText_Solid(font, text, color);
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_Rect dest;
-	dest.x = x;
-	dest.y = y;
-	dest.w = surface->w;
-	dest.h = surface->h;
-	SDL_RenderCopy(renderer, texture, NULL, &dest);
-	SDL_DestroyTexture(texture);
-	SDL_FreeSurface(surface);
-}
-
-static SDL_Texture* new_texture_text(SDL_Renderer* renderer, TTF_Font* font, const char* text, SDL_Color color, int* width, int* height) {
-	SDL_Surface* surface = TTF_RenderText_Solid(font, text, color);
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-	*width = surface->w;
-	*height = surface->h;
-	SDL_FreeSurface(surface);
-	return texture;
-}
-
 int top_bar_height = 26;
 
 static void save_texture(const char* file_name, SDL_Renderer* renderer, SDL_Texture* texture) {
@@ -203,7 +179,8 @@ Renderer::Renderer(int width, int height)
 		exit(1);
 	}
 
-	font = TTF_OpenFont("C:/Windows/Fonts/Cambria.ttc", 16);
+	font = FC_CreateFont();
+	FC_LoadFont(font, renderer, "C:/Windows/Fonts/Century.ttf", 20, SDL_Color {0, 0, 0, 0xFF}, TTF_STYLE_NORMAL);
 	if (!font) {
 		fprintf(stderr, "Font loading error: %s\n", TTF_GetError());
 		exit(1);
@@ -212,7 +189,7 @@ Renderer::Renderer(int width, int height)
 
 Renderer::~Renderer()
 {
-	TTF_CloseFont(font);
+	FC_FreeFont(font);
 	SDL_DestroyTexture(frame);
 	SDL_DestroyTexture(production);
 	SDL_DestroyTexture(food);
@@ -543,12 +520,14 @@ void Renderer::present_screen(const State& state) {
 		{
 			char buffer[1024];
 			snprintf(buffer, 1024, "Turn %d", state.turn);
-			SDL_Rect text;
-			SDL_Texture* text_texture = new_texture_text(renderer, font, buffer, SDL_Color{ 0, 0, 0, 0xFF }, &text.w, &text.h);
-			text.x = window_width / 2 - text.w / 2;
-			text.y = 0;
-			SDL_RenderCopy(renderer, text_texture, NULL, &text);
-			SDL_DestroyTexture(text_texture);
+			int width = FC_GetWidth(font, "%s", buffer);
+			FC_Draw(font, renderer, window_width / 2 - width / 2, 0, "%s", buffer);
+		}
+		{
+			const char* buffer;
+			if (state.render_civilians()) { buffer = "Civilians"; }
+			if (state.render_military()) { buffer = "Military"; }
+			FC_Draw(font, renderer, 3, 0, "%s", buffer);
 		}
 	}
 	{

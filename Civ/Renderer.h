@@ -1,10 +1,10 @@
 #pragma once
 #include <SDL.h>
-#include <SDL_ttf.h>
 #include <vector>
 #include "Tile.h"
 
 class State;
+struct FC_Font;
 
 extern int window_width;
 extern int window_height;
@@ -38,7 +38,7 @@ public:
 	SDL_Texture* food;
 	SDL_Texture* production;
 	SDL_Texture* frame;
-	TTF_Font* font;
+	FC_Font* font;
 	int frame_width;
 	int frame_height;
 	static const int dim = 128;
