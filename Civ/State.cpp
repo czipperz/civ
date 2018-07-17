@@ -127,7 +127,8 @@ int State::advance_state()
 			case 'i':
 				if (selected_point.y != -1) {
 					Tile& selected_tile = tile(selected_point);
-					if (render_civilians() && selected_tile.civilian) {
+					if (render_civilians() && selected_tile.civilian && selected_tile.civilian->movement > 0) {
+						selected_tile.civilian->movement = 0;
 						if (selected_tile.civilian->type == Worker && selected_tile.player == selected_tile.civilian->player) {
 							if (selected_tile.cover == Forest) {
 								selected_tile.improvement = Mill;
@@ -283,6 +284,9 @@ void State::handle_unit_attack_move(Point pressed_point)
 						}
 					}
 					--selected_tile->military->attacks;
+					if (selected_tile->military->attacks == 0) {
+						selected_tile->military->movement = 0;
+					}
 					printf("Before: %d, %d ", selected_tile->military->health, pressed_tile.military->health);
 					int selected_damage = selected_tile->military->max_attack() * selected_tile->military->health / selected_tile->military->max_health();
 					int pressed_damage = pressed_tile.military->max_attack() * pressed_tile.military->health / pressed_tile.military->max_health();

@@ -163,7 +163,12 @@ std::map<Point, std::pair<int, Point>> MilitaryUnit::attack_tiles(Point p, const
 		return move_attack_tiles(p, tiles, attack_range(), terrain_cost_move);
 	}
 	else {
-		return move_attack_tiles(p, tiles, attack_range(), terrain_cost_ranged_attack);
+		if (movement > 0) {
+			return move_attack_tiles(p, tiles, attack_range(), terrain_cost_ranged_attack);
+		}
+		else {
+			return {};
+		}
 	}
 }
 
