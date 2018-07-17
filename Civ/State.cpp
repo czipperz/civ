@@ -180,12 +180,25 @@ int State::advance_state()
 				Point pressed_point = to_grid({ event.button.x, event.button.y });
 				if (event.button.button == SDL_BUTTON_LEFT) {
 					if (pressed_point.y != -1) {
-						printf("Select (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y); 
+						auto& t = tile(pressed_point);
+						if (render_cities_workers() && !t.city) {
+							pressed_point = { -1, -1 };
+						}
+						if (render_military() && !t.military) {
+							pressed_point = { -1, -1 };
+						}
+						if (render_civilians() && !t.civilian) {
+							pressed_point = { -1, -1 };
+						}
 					}
-					else {
+					if (pressed_point.y != -1) {
+						printf("Select (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y);
+						selected_point = pressed_point;
+					}
+					else if (!render_cities_workers()) {
 						printf("Deselect\n");
+						selected_point = { -1, -1 };
 					}
-					selected_point = pressed_point;
 				}
 				if (event.button.button == SDL_BUTTON_RIGHT) {
 					if (pressed_point.y != -1 && selected_point.y != -1) {
