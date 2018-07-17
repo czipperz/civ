@@ -9,6 +9,17 @@
 #include <math.h>
 
 Point State::to_grid(Point mouse_point) {
+	if (mouse_point.y < top_bar_height) {
+		return { -1, -1 };
+	}
+	SDL_Rect minimap_dest;
+	minimap_dest.w = window_width / 8;
+	minimap_dest.h = minimap_dest.w * height / width;
+	minimap_dest.x = 0;
+	minimap_dest.y = window_height - minimap_dest.h;
+	if (mouse_point.inside(minimap_dest)) {
+		return { -1, -1 };
+	}
 	Point pressed_point(
 		floor((mouse_point.x / zoom + xrel - Renderer::border) / (Renderer::dim + Renderer::border)),
 		floor((mouse_point.y / zoom + yrel - Renderer::border) / (Renderer::dim + Renderer::border)));
@@ -27,7 +38,7 @@ Point State::to_grid(Point mouse_point) {
 
 State::State(int width, int height)
 	: xrel(0)
-	, yrel(0)
+	, yrel(-top_bar_height / .5)
 	, zoom(.5)
 	, mouse_down_unmoved(false)
 	, width(width)

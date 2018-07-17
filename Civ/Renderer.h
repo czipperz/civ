@@ -8,6 +8,7 @@ class State;
 
 extern int window_width;
 extern int window_height;
+extern int top_bar_height;
 
 class Renderer
 {
@@ -16,6 +17,7 @@ class Renderer
 public:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	SDL_Texture* minimap;
 	SDL_Texture* plains;
 	SDL_Texture* desert;
 	SDL_Texture* forest;

@@ -37,6 +37,8 @@ static SDL_Texture* new_texture_text(SDL_Renderer* renderer, TTF_Font* font, con
 	return texture;
 }
 
+int top_bar_height = 26;
+
 static void save_texture(const char* file_name, SDL_Renderer* renderer, SDL_Texture* texture) {
 	SDL_Texture* target = SDL_GetRenderTarget(renderer);
 	SDL_SetRenderTarget(renderer, texture);
@@ -69,6 +71,9 @@ Renderer::Renderer(int width, int height)
 		exit(1);
 	}
 	//SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+	minimap = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+		window_width / 8, frame_height * window_width / 8 / frame_width);
 
 	plains = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
 		dim, dim);
@@ -228,6 +233,7 @@ Renderer::~Renderer()
 	SDL_DestroyTexture(forest);
 	SDL_DestroyTexture(desert);
 	SDL_DestroyTexture(plains);
+	SDL_DestroyTexture(minimap);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 }
@@ -528,7 +534,6 @@ void Renderer::present_screen(const State& state) {
 		SDL_RenderCopy(renderer, frame, &src, &dest);
 	}
 	{
-		const int top_bar_height = 22;
 		SDL_Rect top_bar = { 0, 0, window_width, top_bar_height };
 		SDL_SetRenderDrawColor(renderer, 0xF2, 0xC6, 0xAB, 0xFF);
 		SDL_RenderFillRect(renderer, &top_bar);
@@ -545,6 +550,32 @@ void Renderer::present_screen(const State& state) {
 			SDL_RenderCopy(renderer, text_texture, NULL, &text);
 			SDL_DestroyTexture(text_texture);
 		}
+	}
+	{
+		SDL_SetRenderTarget(renderer, minimap);
+		SDL_SetRenderDrawColor(renderer, 0xAA, 0xAA, 0xAA, 0xFF);
+		SDL_RenderClear(renderer);
+
+		SDL_Rect minimap_dest;
+		minimap_dest.w = window_width / 8;
+		minimap_dest.h = minimap_dest.w * state.height / state.width;
+		minimap_dest.x = 0;
+		minimap_dest.y = window_height - minimap_dest.h;
+		SDL_Rect rect;
+		rect.x = state.xrel * minimap_dest.w / frame_width;
+		rect.y = state.yrel * minimap_dest.h / frame_height;
+		rect.w = window_width / state.zoom / frame_width * minimap_dest.w;
+		rect.h = window_height / state.zoom / frame_height * minimap_dest.h;
+		SDL_SetRenderDrawColor(renderer, 0xCC, 0xCC, 0xCC, 0xFF);
+		SDL_RenderFillRect(renderer, &rect);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
+		SDL_RenderDrawRect(renderer, &rect);
+
+		SDL_SetRenderTarget(renderer, NULL);
+		SDL_RenderCopy(renderer, minimap, NULL, &minimap_dest);
+
+		SDL_RenderDrawLine(renderer, minimap_dest.x, minimap_dest.y - 1, minimap_dest.x + minimap_dest.w, minimap_dest.y - 1);
+		SDL_RenderDrawLine(renderer, minimap_dest.x + minimap_dest.w, minimap_dest.y - 1, minimap_dest.x + minimap_dest.w, minimap_dest.y + minimap_dest.h);
 	}
 	SDL_RenderPresent(renderer);
 }
