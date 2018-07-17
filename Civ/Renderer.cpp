@@ -454,20 +454,35 @@ void Renderer::render_frame(const State& state) {
 
 			if (state.render_resources) {
 				Resources r = tile.resources();
-				int total = r.food + r.production;
-				assert(total <= 4);
-				SDL_Rect res_dest = dest;
-				res_dest.w = res_dest.h = 24;
-				res_dest.x -= 24 / 2;
-				res_dest.y += dim / 2 - 24 / 2;
-				res_dest.x += dim / (total + 1);
-				for (int f = 0; f < r.food; ++f) {
-					SDL_RenderCopy(renderer, food, NULL, &res_dest);
-					res_dest.x += dim / (total + 1);
-				}
-				for (int p = 0; p < r.production; ++p) {
-					SDL_RenderCopy(renderer, production, NULL, &res_dest);
-					res_dest.x += dim / (total + 1);
+				std::vector<SDL_Texture*> textures;
+				for (int f = 0; f < r.food; ++f) { textures.push_back(food); }
+				for (int p = 0; p < r.production; ++p) { textures.push_back(production); }
+				int i = 0;
+				if (!textures.empty()) {
+					SDL_Rect res_dest;
+					res_dest.y = dest.y + dim / 2 - ((textures.size() - 1) / 4 + 1) * 24 / 2;
+					res_dest.w = 24;
+					res_dest.h = 24;
+					for (int row = 1; row <= (textures.size() - 1) / 4; ++row) {
+						res_dest.x = dest.x - 24 / 2;
+						res_dest.x += dim / (4 + 1);
+						for (; i < row * 4; ++i) {
+							SDL_RenderCopy(renderer, textures[i], NULL, &res_dest);
+							res_dest.x += dim / (4 + 1);
+						}
+						res_dest.y += 24;
+					}
+					// final row
+					{
+						int remaining = textures.size() % 4;
+						if (remaining == 0 && !textures.empty()) { remaining = 4; }
+						res_dest.x = dest.x - 24 / 2;
+						res_dest.x += dim / (remaining + 1);
+						for (; i < textures.size(); ++i) {
+							SDL_RenderCopy(renderer, textures[i], NULL, &res_dest);
+							res_dest.x += dim / (remaining + 1);
+						}
+					}
 				}
 			}
 		}
