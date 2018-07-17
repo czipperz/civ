@@ -36,6 +36,25 @@ Point State::to_grid(Point mouse_point) {
 	}
 }
 
+Point State::selected_point() const
+{
+	if (render_cities_workers()) { return selected_point_city; }
+	if (render_military()) { return selected_point_military; }
+	if (render_civilians()) { return selected_point_civilian; }
+}
+
+void State::set_selected_point(Point p)
+{
+	if (render_cities_workers()) { selected_point_city = p; }
+	if (render_military()) { selected_point_military = p; }
+	if (render_civilians()) { selected_point_civilian = p; }
+}
+
+void State::unset_selected_point()
+{
+	set_selected_point({ -1, -1 });
+}
+
 State::State(int width, int height)
 	: xrel(0)
 	, yrel(-top_bar_height / .5)
@@ -43,7 +62,9 @@ State::State(int width, int height)
 	, mouse_down_unmoved(false)
 	, width(width)
 	, height(height)
-	, selected_point({ -1, -1 })
+	, selected_point_military({ -1, -1 })
+	, selected_point_civilian({ -1, -1 })
+	, selected_point_city({ -1, -1 })
 	, render_mode(RenderCivilians)
 	, render_resources(true)
 	, turn(1)
@@ -95,8 +116,8 @@ int State::advance_state()
 		if (event.type == SDL_KEYDOWN && !event.key.repeat) {
 			switch (event.key.keysym.sym) {
 			case 's':
-				if (selected_point.y != -1 && !tile(selected_point).military) {
-					tile(selected_point).military = players[0]->create_military_unit(RockSlinger);
+				if (selected_point().y != -1 && !tile(selected_point()).military) {
+					tile(selected_point()).military = players[0]->create_military_unit(RockSlinger);
 				}
 				break;
 			case 'a':
@@ -125,8 +146,8 @@ int State::advance_state()
 				render_resources = true;
 				break;
 			case 'i':
-				if (selected_point.y != -1) {
-					Tile& selected_tile = tile(selected_point);
+				if (selected_point().y != -1) {
+					Tile& selected_tile = tile(selected_point());
 					if (render_civilians() && selected_tile.civilian && selected_tile.civilian->movement > 0) {
 						selected_tile.civilian->movement = 0;
 						if (selected_tile.civilian->type == Worker && selected_tile.player == selected_tile.civilian->player) {
@@ -147,22 +168,23 @@ int State::advance_state()
 						}
 						else if (selected_tile.civilian->type == Settler) {
 							bool has_city = false;
-							for (int y = selected_point.y - 4; y <= selected_point.y + 4; ++y) {
+							for (int y = selected_point().y - 4; y <= selected_point().y + 4; ++y) {
 								if (y < 0 || y >= height) { continue; }
-								for (int x = selected_point.x - 4; x <= selected_point.x + 4; ++x) {
+								for (int x = selected_point().x - 4; x <= selected_point().x + 4; ++x) {
 									if (x < 0 || x >= width) { continue; }
-									if (std::abs(selected_point.y - y) + std::abs(selected_point.x - x) > 4) { continue; }
+									if (std::abs(selected_point().y - y) + std::abs(selected_point().x - x) > 4) { continue; }
 									if (tiles[y][x].city) {
 										has_city = true;
 									}
 								}
 							}
 							if (!has_city) {
-								selected_tile.city = selected_tile.civilian->player->create_city(*this, selected_point.x, selected_point.y);
+								selected_tile.city = selected_tile.civilian->player->create_city(*this, selected_point().x, selected_point().y);
 								selected_tile.city->workers.emplace_back();
 								selected_tile.civilian->kill();
 								selected_tile.civilian = NULL;
 								selected_tile.cover = NoCover;
+								selected_point_city = selected_point();
 							}
 						}
 					}
@@ -194,17 +216,17 @@ int State::advance_state()
 					}
 					if (pressed_point.y != -1) {
 						printf("Select (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y);
-						selected_point = pressed_point;
+						set_selected_point(pressed_point);
 					}
 					else if (!render_cities_workers()) {
 						printf("Deselect\n");
-						selected_point = { -1, -1 };
+						unset_selected_point();
 					}
 				}
 				if (event.button.button == SDL_BUTTON_RIGHT) {
-					if (pressed_point.y != -1 && selected_point.y != -1) {
+					if (pressed_point.y != -1 && selected_point().y != -1) {
 						if (render_cities_workers()) {
-							City* city = tile(selected_point).city;
+							City* city = tile(selected_point()).city;
 							if (city) {
 								printf("Toggle working (%d, %d)\n", pressed_point.x, pressed_point.y);
 								if (city->owned_points[pressed_point.y][pressed_point.x]) {
@@ -264,13 +286,13 @@ int State::advance_state()
 void State::handle_unit_attack_move(Point pressed_point)
 {
 	Tile& pressed_tile = tile(pressed_point);
-	Tile* selected_tile = &tile(selected_point);
+	Tile* selected_tile = &tile(selected_point());
 	if (render_military() && selected_tile->military) {
 		// TODO: implement "fast movement" where ranged attack range != movement
 		if (pressed_tile.military) {
-			const auto mtiles = attack_tiles(selected_point);
-			auto it = mtiles.find(pressed_point);
-			if (it != mtiles.end()) {
+			const auto atiles = attack_tiles(selected_point());
+			auto it = atiles.find(pressed_point);
+			if (it != atiles.end()) {
 				if (selected_tile->military->player != pressed_tile.military->player && selected_tile->military->attacks > 0) {
 					if (selected_tile->military->is_melee()) {
 						MilitaryUnit*& move_dest = tile(it->second.second).military;
@@ -279,8 +301,8 @@ void State::handle_unit_attack_move(Point pressed_point)
 							assert(!move_dest);
 							move_dest = selected_tile->military;
 							selected_tile->military = NULL;
-							selected_point = it->second.second;
-							selected_tile = &tile(selected_point);
+							set_selected_point(it->second.second);
+							selected_tile = &tile(selected_point());
 						}
 					}
 					--selected_tile->military->attacks;
@@ -298,7 +320,7 @@ void State::handle_unit_attack_move(Point pressed_point)
 								selected_tile->military->kill();
 								selected_tile->military = NULL;
 								printf("After: dead, %d\n", pressed_tile.military->health);
-								selected_point = { -1, -1 };
+								unset_selected_point();
 								return;
 							}
 							else {
@@ -311,7 +333,7 @@ void State::handle_unit_attack_move(Point pressed_point)
 							pressed_tile.military = selected_tile->military;
 							selected_tile->military = NULL;
 							printf("After: %d, dead\n", pressed_tile.military->health);
-							selected_point = pressed_point;
+							set_selected_point(pressed_point);
 							return;
 						}
 					}
@@ -329,25 +351,25 @@ void State::handle_unit_attack_move(Point pressed_point)
 			}
 		}
 		else {
-			const auto mtiles = movement_tiles(selected_point);
+			const auto mtiles = movement_tiles(selected_point());
 			auto it = mtiles.find(pressed_point);
 			if (it != mtiles.end()) {
 				selected_tile->military->movement = it->second.first;
 				pressed_tile.military = selected_tile->military;
 				selected_tile->military = NULL;
-				selected_point = pressed_point;
+				set_selected_point(pressed_point);
 			}
 		}
 	}
 	else if (render_civilians() && selected_tile->civilian) {
 		if (!pressed_tile.civilian) {
-			const auto mtiles = movement_tiles(selected_point);
+			const auto mtiles = movement_tiles(selected_point());
 			auto it = mtiles.find(pressed_point);
 			if (it != mtiles.end()) {
 				selected_tile->civilian->movement = it->second.first;
 				pressed_tile.civilian = selected_tile->civilian;
 				selected_tile->civilian = 0;
-				selected_point = pressed_point;
+				set_selected_point(pressed_point);
 			}
 		}
 	}

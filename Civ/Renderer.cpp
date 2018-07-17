@@ -315,8 +315,8 @@ void Renderer::render_frame(const State& state) {
 		}
 	}
 
-	if (state.render_military() && state.selected_point.y != -1 && state.tile(state.selected_point).military) {
-		const auto mtiles = state.movement_tiles(state.selected_point);
+	if (state.render_military() && state.selected_point().y != -1 && state.tile(state.selected_point()).military) {
+		const auto mtiles = state.movement_tiles(state.selected_point());
 		for (const auto& tile : mtiles) {
 			SDL_Rect dest;
 			dest.x = (dim + border) * tile.first.x + border;
@@ -324,7 +324,7 @@ void Renderer::render_frame(const State& state) {
 			dest.w = dim;
 			dest.h = dim;
 			if (state.tile(tile.first).military) {
-				const Tile& selected_tile = state.tile(state.selected_point);
+				const Tile& selected_tile = state.tile(state.selected_point());
 				if (selected_tile.military->player != state.tile(tile.first).military->player && selected_tile.military->attacks > 0) {
 					SDL_RenderCopy(renderer, military_move_attack, NULL, &dest);
 					if (selected_tile.military->is_melee()) {
@@ -357,8 +357,8 @@ void Renderer::render_frame(const State& state) {
 				SDL_RenderCopy(renderer, military_move_only, NULL, &dest);
 			}
 		}
-		if (state.tile(state.selected_point).military->attacks > 0) {
-			const auto atiles = state.attack_tiles(state.selected_point);
+		if (state.tile(state.selected_point()).military->attacks > 0) {
+			const auto atiles = state.attack_tiles(state.selected_point());
 			for (const auto& tile : atiles) {
 				if (mtiles.find(tile.first) == mtiles.end()) {
 					SDL_Rect dest;
@@ -371,8 +371,8 @@ void Renderer::render_frame(const State& state) {
 			}
 		}
 	}
-	else if (state.render_civilians() && state.selected_point.y != -1 && state.tile(state.selected_point).civilian) {
-		const auto tiles = state.movement_tiles(state.selected_point);
+	else if (state.render_civilians() && state.selected_point().y != -1 && state.tile(state.selected_point()).civilian) {
+		const auto tiles = state.movement_tiles(state.selected_point());
 		for (const auto& tile : tiles) {
 			SDL_Rect dest;
 			dest.x = (dim + border) * tile.first.x + border;
@@ -385,8 +385,8 @@ void Renderer::render_frame(const State& state) {
 		}
 	}
 
-	if (state.render_cities_workers() && state.selected_point.y != -1 && state.tile(state.selected_point).city) {
-		City* city = state.tile(state.selected_point).city;
+	if (state.render_cities_workers() && state.selected_point().y != -1 && state.tile(state.selected_point()).city) {
+		City* city = state.tile(state.selected_point()).city;
 		for (int y = 0; y < state.height; ++y) {
 			for (int x = 0; x < state.width; ++x) {
 				if (city->owned_points[y][x]) {
@@ -423,7 +423,7 @@ void Renderer::render_frame(const State& state) {
 				SDL_RenderCopy(renderer, city_overlay, NULL, &dest);
 			}
 			if (state.render_civilians() && tile.civilian) {
-				if (state.selected_point.x == x && state.selected_point.y == y) {
+				if (state.selected_point().x == x && state.selected_point().y == y) {
 					if (tile.military) {
 						SDL_RenderCopy(renderer, military_background_selected_no_attack, NULL, &dest);
 					}
@@ -444,7 +444,7 @@ void Renderer::render_frame(const State& state) {
 				}
 			}
 			if (state.render_military() && tile.military) {
-				if (state.selected_point.x == x && state.selected_point.y == y) {
+				if (state.selected_point().x == x && state.selected_point().y == y) {
 					if (tile.military->attacks > 0) {
 						SDL_RenderCopy(renderer, military_background_selected, NULL, &dest);
 					}
@@ -558,8 +558,8 @@ void Renderer::present_screen(const State& state) {
 			if (state.render_cities_workers()) { buffer = "City"; }
 			FC_Draw(font, renderer, 3, 0, "%s", buffer);
 		}
-		if (state.render_cities_workers() && state.selected_point.y != -1) {
-			City* selected_city = state.tile(state.selected_point).city;
+		if (state.render_cities_workers() && state.selected_point().y != -1) {
+			City* selected_city = state.tile(state.selected_point()).city;
 			if (selected_city) {
 				Resources r = selected_city->resources_per_turn(state);
 				char buffer[1024];

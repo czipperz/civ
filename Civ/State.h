@@ -30,7 +30,9 @@ public:
 	int height;
 
 	std::vector<std::vector<Tile>> tiles;
-	Point selected_point;
+	Point selected_point_military;
+	Point selected_point_civilian;
+	Point selected_point_city;
 
 	std::vector<std::unique_ptr<Player>> players;
 
@@ -46,6 +48,10 @@ public:
 
 	std::map<Point, std::pair<int, Point>> movement_tiles(const Point& tile) const;
 	std::map<Point, std::pair<int, Point>> attack_tiles(const Point& tile) const;
+
+	Point selected_point() const;
+	void set_selected_point(Point);
+	void unset_selected_point();
 
 	const Tile& tile(Point t) const;
 	Tile& tile(Point t);
