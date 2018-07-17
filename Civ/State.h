@@ -10,7 +10,7 @@
 class Player;
 
 enum RenderMode {
-	RenderMilitary, RenderCivilians,
+	RenderMilitary, RenderCivilians, RenderCities,
 };
 
 class State
@@ -52,5 +52,6 @@ public:
 
 	bool render_military() const;
 	bool render_civilians() const;
+	bool render_cities_workers() const;
 };
 

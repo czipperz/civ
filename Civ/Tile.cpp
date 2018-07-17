@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <vector>
 #include "Resources.h"
+#include <algorithm>
 
 bool Tile::add_forest()
 {
@@ -76,6 +77,10 @@ Resources Tile::resources() const
 	case Mill:
 		++r.production;
 		break;
+	}
+	if (city) {
+		r.food += 2;
+		r.production = std::max(r.production, 1);
 	}
 	return r;
 }

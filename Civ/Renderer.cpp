@@ -383,6 +383,32 @@ void Renderer::render_frame(const State& state) {
 		}
 	}
 
+	if (state.render_cities_workers() && state.selected_point.y != -1 && state.tile(state.selected_point).city) {
+		City* city = state.tile(state.selected_point).city;
+		for (int y = 0; y < state.height; ++y) {
+			for (int x = 0; x < state.width; ++x) {
+				if (city->owned_points[y][x]) {
+					SDL_Rect dest;
+					dest.x = (dim + border) * x + border;
+					dest.y = (dim + border) * y + border;
+					dest.w = dim;
+					dest.h = dim;
+					SDL_RenderCopy(renderer, military_move_only, NULL, &dest);
+				}
+			}
+		}
+		for (auto& worker : city->workers) {
+			if (worker.working) {
+				SDL_Rect dest;
+				dest.x = (dim + border) * worker.working_point.x + border;
+				dest.y = (dim + border) * worker.working_point.y + border;
+				dest.w = dim;
+				dest.h = dim;
+				SDL_RenderCopy(renderer, military_move_attack, NULL, &dest);
+			}
+		}
+	}
+
 	for (int y = 0; y < state.height; ++y) {
 		for (int x = 0; x < state.width; ++x) {
 			SDL_Rect dest;
@@ -527,7 +553,35 @@ void Renderer::present_screen(const State& state) {
 			const char* buffer;
 			if (state.render_civilians()) { buffer = "Civilians"; }
 			if (state.render_military()) { buffer = "Military"; }
+			if (state.render_cities_workers()) { buffer = "City"; }
 			FC_Draw(font, renderer, 3, 0, "%s", buffer);
+		}
+		if (state.render_cities_workers() && state.selected_point.y != -1) {
+			City* selected_city = state.tile(state.selected_point).city;
+			if (selected_city) {
+				Resources r = selected_city->resources_per_turn(state);
+				char buffer[1024];
+				SDL_Rect dest;
+				dest.x = window_width;
+				SDL_QueryTexture(food, NULL, NULL, &dest.w, &dest.h);
+				dest.w = dest.w * 2 / 4;
+				dest.h = dest.h * 2 / 4;
+				dest.y = top_bar_height / 2 - dest.h / 2;
+
+				dest.x -= 4;
+				snprintf(buffer, 1024, "%s%d", r.production >= 0 ? "+" : "-", abs(r.production));
+				dest.x -= FC_GetWidth(font, "%s", buffer);
+				FC_Draw(font, renderer, dest.x, 0, "%s", buffer);
+				dest.x -= dest.w + 2;
+				SDL_RenderCopy(renderer, production, NULL, &dest);
+
+				dest.x -= 4;
+				snprintf(buffer, 1024, "%s%d", r.food >= 0 ? "+" : "-", abs(r.food));
+				dest.x -= FC_GetWidth(font, "%s", buffer);
+				FC_Draw(font, renderer, dest.x, 0, "%s", buffer);
+				dest.x -= dest.w + 2;
+				SDL_RenderCopy(renderer, food, NULL, &dest);
+			}
 		}
 	}
 	{

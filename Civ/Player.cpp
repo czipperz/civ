@@ -22,17 +22,19 @@ CivilianUnit* Player::create_civilian_unit(CivilianUnitType type)
 
 City* Player::create_city(State& state, int x, int y)
 {
-	cities.push_back(std::make_unique<City>(this));
+	City* city = new City(this, Point{ x, y }, state.width, state.height);
+	cities.emplace_back(city);
 	for (int py = y - 1; py <= y + 1; ++py) {
 		if (py < 0 || py >= state.height) { continue; }
 		for (int px = x - 1; px <= x + 1; ++px) {
 			if (px < 0 || px >= state.width) { continue; }
 			if (!state.tiles[py][px].player) {
 				state.tiles[py][px].player = this;
+				city->owned_points[py][px] = true;
 			}
 		}
 	}
-	return cities.back().get();
+	return city;
 }
 
 void Player::end_turn()

@@ -112,8 +112,17 @@ int State::advance_state()
 				render_resources = false;
 				break;
 			case 'c':
-				render_mode = RenderCivilians;
-				render_resources = !render_resources;
+				if (render_mode != RenderCivilians) {
+					render_mode = RenderCivilians;
+					render_resources = true;
+				}
+				else {
+					render_resources = !render_resources;
+				}
+				break;
+			case 't':
+				render_mode = RenderCities;
+				render_resources = true;
 				break;
 			case 'i':
 				if (selected_point.y != -1) {
@@ -149,8 +158,10 @@ int State::advance_state()
 							}
 							if (!has_city) {
 								selected_tile.city = selected_tile.civilian->player->create_city(*this, selected_point.x, selected_point.y);
+								selected_tile.city->workers.emplace_back();
 								selected_tile.civilian->kill();
 								selected_tile.civilian = NULL;
+								selected_tile.cover = NoCover;
 							}
 						}
 					}
@@ -178,8 +189,41 @@ int State::advance_state()
 				}
 				if (event.button.button == SDL_BUTTON_RIGHT) {
 					if (pressed_point.y != -1 && selected_point.y != -1) {
-						printf("Move or attack (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y);
-						handle_unit_attack_move(pressed_point);
+						if (render_cities_workers()) {
+							City* city = tile(selected_point).city;
+							if (city) {
+								printf("Toggle working (%d, %d)\n", pressed_point.x, pressed_point.y);
+								if (city->owned_points[pressed_point.y][pressed_point.x]) {
+									bool finished = false;
+									for (size_t i = 0; i < city->workers.size(); ++i) {
+										auto& worker = city->workers[i];
+										if (worker.working && worker.working_point == pressed_point) {
+											if (i != 0) {
+												worker.working = false;
+											}
+											finished = true;
+											break;
+										}
+									}
+									if (!finished) {
+										for (auto& worker : city->workers) {
+											if (!worker.working) {
+												worker.working = true;
+												worker.working_point = pressed_point;
+												break;
+											}
+										}
+									}
+								}
+							}
+							else {
+								printf("No city selected\n");
+							}
+						}
+						else {
+							printf("Move or attack (%d, %d) (%d, %d)\n", pressed_point.x, pressed_point.y, event.button.x, event.button.y);
+							handle_unit_attack_move(pressed_point);
+						}
 					}
 				}
 			}
@@ -337,4 +381,9 @@ bool State::render_military() const
 bool State::render_civilians() const
 {
 	return render_mode == RenderCivilians;
+}
+
+bool State::render_cities_workers() const
+{
+	return render_mode == RenderCities;
 }
